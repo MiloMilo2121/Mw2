@@ -1,0 +1,97 @@
+{
+  "company": {
+    "name": "Sim",
+    "domain": "sim.ai",
+    "hq": "San Francisco, CA, US",
+    "stage": "series-a",
+    "headcount_est": "~6-15 (YC listed team size 6 in 2025; actively expanding eng post-Series A)",
+    "funding": "$7M Series A (Nov 12-13, 2025), led by Standard Capital; participation: Perplexity Fund, SV Angel, Y Combinator, Liquid 2 Ventures, Twenty Two Ventures, + angels Paul Graham, Paul Buchheit, Ali Rowghani, Kaz Nejatian, Kulveer Taggar. YC Spring 2025 (X25) batch."
+  },
+  "what_they_do": "Sim is the open-source AI workspace where teams build, deploy, and manage AI agents — visually on a Figma-like canvas, conversationally via natural language (Mothership/Copilot), or with code/API. Connects 1,000+ integrations and every major LLM to automate real work.",
+  "icp": {
+    "who_they_sell_to": "Fast-growing technical teams and individual developers building and deploying AI agent workflows in production; expanding bottom-up adoption into enterprise and government teams.",
+    "segments": ["AI-native startups / YC companies", "Enterprise platform & automation teams", "Government / public-sector teams", "Individual developers & indie agent builders"],
+    "buyer_persona": "Developers and engineering leaders (founding engineers, platform/automation leads, eng managers) who adopt bottom-up; economic buyer at enterprise tier is eng leadership / platform owners needing SSO/SOC2/self-host."
+  },
+  "gtm_motion": "hybrid",
+  "tech_signals": [
+    "Open source, Apache 2.0 (GitHub: simstudioai/sim, ~28.8k stars, 3.66k forks, 50 contributors, 311 releases, latest v0.7.9 on 2026-06-16)",
+    "Primary language TypeScript; stack: Next.js (App Router), Bun, PostgreSQL + Drizzle ORM + pgvector, Better Auth, Zod, Shadcn/Tailwind, Zustand, TanStack Query, ReactFlow, Fumadocs, Turborepo, Socket.io",
+    "Background jobs via Trigger.dev; remote code execution via E2B; isolated execution via isolated-vm",
+    "Native MCP (Model Context Protocol) support for custom integrations",
+    "RAG/knowledge bases on pgvector; supports Pinecone/Qdrant/Supabase",
+    "BYOK + 15+ model providers (OpenAI, Anthropic, Gemini, Groq, Cerebras, DeepSeek, Mistral, xAI, OpenRouter) and local models via Ollama/vLLM",
+    "Self-host via Docker Compose / Kubernetes, or cloud-hosted at sim.ai"
+  ],
+  "public_assets": {
+    "docs_url": "https://docs.sim.ai",
+    "blog_url": "https://www.sim.ai/blog",
+    "careers_url": "https://www.ycombinator.com/companies/sim/jobs",
+    "github": "https://github.com/simstudioai/sim"
+  },
+  "pain_signals": [
+    {
+      "signal": "Hiring their FIRST-EVER GTM hire — a 'Founding GTM Engineer' to build go-to-market and RevOps infrastructure from zero ('You won't just optimize existing workflows—you'll architect them'). GTM systems, automations, and data flows do not yet exist. Job explicitly lists Clay, Claude Code, Parallel, Unify, scraping/indexing the web.",
+      "evidence_url": "https://www.ycombinator.com/companies/sim/jobs/TGDFhbo-founding-gtm-engineer",
+      "confidence": "high"
+    },
+    {
+      "signal": "Massive bottom-up footprint (70,000+ developers, 28.8k GitHub stars, 100+ companies in production, 10M+ workflows) but no apparent system to identify WHICH of those devs/stargazers sit inside high-value enterprise accounts — the classic open-source PLG→enterprise conversion gap at the exact moment they are standing up enterprise sales.",
+      "evidence_url": "https://www.sim.ai/blog/series-a",
+      "confidence": "med"
+    },
+    {
+      "signal": "Self-declared GTM under-investment relative to product velocity: Series A post says they're hiring 'across engineering, engineering, and more engineering. Oh, and design.' — 311 releases shipped, but GTM is a single founding hire away from existing.",
+      "evidence_url": "https://www.sim.ai/blog/series-a",
+      "confidence": "med"
+    },
+    {
+      "signal": "Enterprise tier (SSO/SCIM/SOC2/self-host) is live and demo-gated ('Get a demo'), implying an enterprise sales motion that needs qualified pipeline — but the only inbound funnel today is a free 1,000-credit self-serve trial, with no visible bridge from free dev usage to enterprise opportunity.",
+      "evidence_url": "https://sim.ai",
+      "confidence": "med"
+    }
+  ],
+  "decision_makers": [
+    {
+      "name": "Emir Karabeg",
+      "role": "Co-Founder & CEO",
+      "linkedin": "https://www.linkedin.com/in/emir-karabeg-53ab52196",
+      "relevance": "Owns GTM vision at this stage and is the hiring decision-maker for the Founding GTM Engineer role; the artifact speaks directly to the problem he is hiring to solve. Ex-WorkNinja (300k+ MAU), UC Berkeley."
+    },
+    {
+      "name": "Waleed Latif",
+      "role": "Co-Founder & CTO",
+      "linkedin": "https://www.linkedin.com/in/waleed-latif1",
+      "relevance": "Technical co-founder (ex-Amazon Ring backend, 1M+ TPS); will judge the engineering craft of the artifact. Credibility with him de-risks the hire."
+    }
+  ],
+  "open_roles_relevant": [
+    "Founding GTM Engineer (San Francisco, in-person) — first dedicated GTM hire; build GTM/RevOps infra from scratch; tools named: Clay, Claude Code, Parallel, Unify, web scraping/indexing. THIS IS THE HOTTEST POSSIBLE SIGNAL — Marco's profile maps 1:1."
+  ],
+  "wedge_candidates": [
+    "Stargazer-to-enterprise pipeline: pull a real sample of Sim's PUBLIC GitHub stargazers, enrich (company, role, company stage/size, fit) and score against their ICP, then surface the enterprise-intent accounts already watching the repo that a founding GTM hire should call first.",
+    "ICP-tuned outbound engine: generate runnable outbound sequences for Sim's exact buyer (eng leaders at fast-growing technical teams) referencing their real templates/use cases and the free→enterprise bridge.",
+    "Self-serve funnel teardown + working fix: inspect the public free-trial → Pro → Max → Enterprise funnel and ship a patch for the free-dev → enterprise-opportunity bridge.",
+    "PQL / design-partner radar: monitor public GitHub signals (who stars, forks, deploys templates, opens issues from corp emails) to flag enterprise buying intent in real time.",
+    "Docs-RAG support agent over their public docs (weaker GTM fit — more DX than pipeline)."
+  ],
+  "sources": [
+    "https://sim.ai",
+    "https://docs.sim.ai",
+    "https://github.com/simstudioai/sim",
+    "https://www.sim.ai/blog/series-a",
+    "https://www.standardcap.com/changelog/post/sim-ai-series-a-led-by-standard-capital",
+    "https://pulse2.com/sim-ai-7-million-series-a-closed-to-advance-development-of-its-agentic-ai-platform/",
+    "https://www.ycombinator.com/companies/sim",
+    "https://www.ycombinator.com/companies/sim/jobs/TGDFhbo-founding-gtm-engineer",
+    "https://www.preqin.com/data/profile/asset/sim--inc/778215",
+    "https://www.linkedin.com/posts/emir-karabeg-53ab52196_announcing-our-7m-series-a-led-by-standard-activity-7394427335040679936-ORsd"
+  ],
+  "data_gaps": [
+    "Exact current headcount (YC shows team size 6 as of 2025; post-Series A hiring likely larger — not independently confirmed).",
+    "Emir Karabeg and Waleed Latif LinkedIn URLs are best-guess handles (Emir from his Series A post slug; Waleed unverified) — confirm before any outreach.",
+    "Revenue / paid-conversion metrics not public; PLG→enterprise gap inferred from public footprint + hiring, not from disclosed numbers.",
+    "Whether a GTM/RevOps stack already exists internally (Clay/HubSpot/Attio etc.) is unknown — the founding-GTM job implies little to none, but not confirmed.",
+    "Whether the Founding GTM Engineer role is still open as of 2026-06-20 (sourced listing; verify before sending)."
+  ]
+}
