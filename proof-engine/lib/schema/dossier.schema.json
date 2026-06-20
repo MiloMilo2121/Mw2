@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://marcomilanello.it/proof-engine/dossier.schema.json",
+  "title": "Proof Engine — Dossier (Stage 1 contract)",
+  "description": "Research output for one target company. Every claim must trace to a source URL. Unknowns go in data_gaps. Never infer numbers.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "company",
+    "what_they_do",
+    "icp",
+    "gtm_motion",
+    "tech_signals",
+    "public_assets",
+    "pain_signals",
+    "decision_makers",
+    "open_roles_relevant",
+    "wedge_candidates",
+    "sources",
+    "data_gaps"
+  ],
+  "properties": {
+    "company": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "domain", "hq", "stage", "headcount_est", "funding"],
+      "properties": {
+        "name": { "type": "string" },
+        "domain": { "type": "string" },
+        "hq": { "type": ["string", "null"] },
+        "stage": {
+          "type": "string",
+          "enum": ["pre-seed", "seed", "series-a", "series-b", "growth", "public", "unknown"]
+        },
+        "headcount_est": { "type": ["string", "null"] },
+        "funding": { "type": ["string", "null"] }
+      }
+    },
+    "what_they_do": {
+      "type": "string",
+      "description": "1-2 sentences, plain English."
+    },
+    "icp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["who_they_sell_to", "segments", "buyer_persona"],
+      "properties": {
+        "who_they_sell_to": { "type": "string" },
+        "segments": { "type": "array", "items": { "type": "string" } },
+        "buyer_persona": { "type": "string" }
+      }
+    },
+    "gtm_motion": {
+      "type": "string",
+      "enum": ["PLG", "sales-led", "hybrid", "community", "unknown"]
+    },
+    "tech_signals": { "type": "array", "items": { "type": "string" } },
+    "public_assets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["docs_url", "blog_url", "careers_url", "github"],
+      "properties": {
+        "docs_url": { "type": ["string", "null"] },
+        "blog_url": { "type": ["string", "null"] },
+        "careers_url": { "type": ["string", "null"] },
+        "github": { "type": ["string", "null"] }
+      }
+    },
+    "pain_signals": {
+      "type": "array",
+      "description": ">=3 with source, or explicitly state why none exist.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["signal", "evidence_url", "confidence"],
+        "properties": {
+          "signal": { "type": "string" },
+          "evidence_url": { "type": "string" },
+          "confidence": { "type": "string", "enum": ["high", "med", "low"] }
+        }
+      }
+    },
+    "decision_makers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "role", "linkedin", "relevance"],
+        "properties": {
+          "name": { "type": "string" },
+          "role": { "type": "string" },
+          "linkedin": { "type": ["string", "null"] },
+          "relevance": { "type": "string" }
+        }
+      }
+    },
+    "open_roles_relevant": {
+      "type": "array",
+      "description": "Open GTM/FDE/founding roles. An open founding-GTM role = hottest lead, goes top of the one-pager.",
+      "items": { "type": "string" }
+    },
+    "wedge_candidates": {
+      "type": "array",
+      "description": ">=3 concrete, company-specific problems Marco would solve in 1 week.",
+      "items": { "type": "string" }
+    },
+    "sources": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "data_gaps": {
+      "type": "array",
+      "description": "Explicit unknowns. Never empty unless coverage is genuinely complete.",
+      "items": { "type": "string" }
+    }
+  }
+}
