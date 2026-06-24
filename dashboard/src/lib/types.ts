@@ -25,13 +25,27 @@ export type CampaignAnalytics = {
   contacted: number;
   emailsSent: number;
   opens: number;
+  opensUnique: number;
   replies: number;
+  repliesUnique: number;
   clicks: number;
+  clicksUnique: number;
   bounced: number;
   unsubscribed: number;
   completed: number;
   opportunities: number;
   opportunityValue: number;
+};
+
+/** Per-step (and A/B variant) performance within a campaign sequence. */
+export type CampaignStep = {
+  step: number;
+  variant: string;
+  sent: number;
+  opened: number;
+  uniqueOpened: number;
+  replies: number;
+  clicks: number;
 };
 
 /** A single day of aggregated sending activity. */
@@ -65,6 +79,8 @@ export type Lead = {
   company: string;
   jobTitle: string;
   website: string;
+  city: string;
+  linkedin: string;
   opens: number;
   clicks: number;
   replies: number;
@@ -72,6 +88,7 @@ export type Lead = {
   statusLabel: string;
   campaignId: string;
   lastContact: string | null;
+  lastOpen: string | null;
 };
 
 export type FeedbackItem = {
@@ -105,10 +122,14 @@ export type Totals = {
   contacted: number;
   emailsSent: number;
   opens: number;
+  opensUnique: number;
   replies: number;
+  repliesUnique: number;
   clicks: number;
+  clicksUnique: number;
   bounced: number;
   unsubscribed: number;
+  completed: number;
   opportunities: number;
   opportunityValue: number;
   // derived rates (0-1)

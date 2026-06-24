@@ -59,6 +59,17 @@ export function useLeads(
   return { data, isLoading, error };
 }
 
+import type { CampaignStep } from "@/lib/types";
+
+export function useSteps(slug: string, campaign: string) {
+  const { data, isLoading } = useSWR<{ steps: CampaignStep[]; source: string }>(
+    campaign ? `/api/c/${slug}/steps?campaign=${campaign}` : null,
+    fetcher,
+    { refreshInterval: 60_000, keepPreviousData: true }
+  );
+  return { steps: data?.steps ?? [], isLoading };
+}
+
 export async function postFeedback(
   slug: string,
   payload: {

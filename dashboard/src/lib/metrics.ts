@@ -23,10 +23,14 @@ export function emptyTotals(): Totals {
     contacted: 0,
     emailsSent: 0,
     opens: 0,
+    opensUnique: 0,
     replies: 0,
+    repliesUnique: 0,
     clicks: 0,
+    clicksUnique: 0,
     bounced: 0,
     unsubscribed: 0,
+    completed: 0,
     opportunities: 0,
     opportunityValue: 0,
     openRate: 0,
@@ -43,10 +47,14 @@ export function totalsFromCampaigns(campaigns: CampaignAnalytics[]): Totals {
     t.contacted += c.contacted;
     t.emailsSent += c.emailsSent;
     t.opens += c.opens;
+    t.opensUnique += c.opensUnique;
     t.replies += c.replies;
+    t.repliesUnique += c.repliesUnique;
     t.clicks += c.clicks;
+    t.clicksUnique += c.clicksUnique;
     t.bounced += c.bounced;
     t.unsubscribed += c.unsubscribed;
+    t.completed += c.completed;
     t.opportunities += c.opportunities;
     t.opportunityValue += c.opportunityValue;
   }
@@ -102,10 +110,14 @@ function estimatePrevious(current: Totals, first: Totals, second: Totals): Total
     contacted: Math.round(current.contacted * fSent),
     emailsSent,
     opens,
+    opensUnique: Math.round(current.opensUnique * fOpens),
     replies,
+    repliesUnique: Math.round(current.repliesUnique * fReplies),
     clicks,
+    clicksUnique: Math.round(current.clicksUnique * fClicks),
     bounced,
     unsubscribed: Math.round(current.unsubscribed * fReplies),
+    completed: Math.round(current.completed * fSent),
     opportunities: Math.round(current.opportunities * fReplies),
     opportunityValue: Math.round(current.opportunityValue * fReplies),
     openRate: emailsSent ? opens / emailsSent : 0,

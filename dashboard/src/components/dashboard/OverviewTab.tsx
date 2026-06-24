@@ -32,6 +32,16 @@ export function OverviewTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
         <KpiCard label="Bounce rate" value={fmtPct(t.bounceRate)} current={t.bounceRate} previous={p.bounceRate} invertDelta hint="lower is better" />
       </div>
 
+      {/* Secondary metrics strip */}
+      <div className="card grid grid-cols-2 gap-y-3 px-5 py-4 text-sm sm:grid-cols-3 lg:grid-cols-6">
+        <Mini label="Lead totali" value={fmtInt(t.leads)} />
+        <Mini label="Contattati" value={fmtInt(t.contacted)} />
+        <Mini label="Aperture uniche" value={fmtInt(t.opensUnique)} sub={fmtPct(t.emailsSent ? t.opensUnique / t.emailsSent : 0)} />
+        <Mini label="Click unici" value={fmtInt(t.clicksUnique)} />
+        <Mini label="Completati" value={fmtInt(t.completed)} />
+        <Mini label="Disiscritti" value={fmtInt(t.unsubscribed)} />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="card p-5 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
@@ -83,6 +93,18 @@ export function OverviewTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
         ) : (
           <div className="text-sm muted">No campaign data yet.</div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function Mini({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div>
+      <div className="text-xs muted">{label}</div>
+      <div className="mt-0.5 text-lg font-bold tabular-nums" style={{ color: "var(--ink)" }}>
+        {value}
+        {sub ? <span className="ml-1 text-xs font-normal muted">{sub}</span> : null}
       </div>
     </div>
   );

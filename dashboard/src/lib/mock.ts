@@ -10,9 +10,32 @@
 import type {
   AccountHealth,
   CampaignAnalytics,
+  CampaignStep,
   DailyPoint,
   Lead,
 } from "./types";
+
+export function mockSteps(campaignId: string): CampaignStep[] {
+  const rng = makeRng(campaignId + ":steps");
+  const out: CampaignStep[] = [];
+  const nSteps = 3;
+  for (let step = 0; step < nSteps; step++) {
+    for (const variant of ["0", "1"]) {
+      const sent = Math.floor((120 - step * 30) * (0.8 + rng() * 0.4));
+      const opened = Math.floor(sent * (0.45 + rng() * 0.3));
+      out.push({
+        step,
+        variant,
+        sent,
+        opened,
+        uniqueOpened: Math.floor(opened * (0.6 + rng() * 0.2)),
+        replies: Math.floor(sent * (0.01 + rng() * 0.04)),
+        clicks: Math.floor(opened * (0.03 + rng() * 0.08)),
+      });
+    }
+  }
+  return out;
+}
 
 function makeRng(seedStr: string) {
   let h = 2166136261 >>> 0;
@@ -63,8 +86,11 @@ export function mockCampaigns(slug: string, days: number): CampaignAnalytics[] {
       contacted,
       emailsSent,
       opens,
+      opensUnique: Math.floor(opens * (0.62 + rng() * 0.15)),
       replies,
+      repliesUnique: replies,
       clicks,
+      clicksUnique: Math.floor(clicks * (0.8 + rng() * 0.2)),
       bounced,
       unsubscribed,
       completed: Math.floor(contacted * (0.3 + rng() * 0.4)),
@@ -110,6 +136,7 @@ const FIRST = ["Luca", "Marco", "Sara", "Giulia", "Andrea", "Chiara", "Matteo", 
 const LAST = ["Rossi", "Bianchi", "Lando", "Ferrari", "Esposito", "Romano", "Greco", "Conti", "Bruno", "Gallo", "Costa", "Rizzo", "Moretti", "Barbieri", "Fontana", "Marino"];
 const COMP = ["Comunello Group", "Geriko SRL", "Nordtech", "Vela Digital", "Acme Foods", "Brera Studio", "Metodo Lab", "Polaris SpA", "Quadra", "Sintesi", "Vivace Retail", "Orizzonte"];
 const ROLES = ["CEO", "Founder", "Head of Sales", "Marketing Manager", "CTO", "Operations Lead", "Procurement", "Owner", "Growth Lead", "COO"];
+const CITIES = ["Verona", "Milano", "Brescia", "Vicenza", "Padova", "Bergamo", "Treviso", "Bologna", "Mantova", "Trento"];
 
 export function mockLeads(slug: string, campaigns: { id: string; name: string }[]): Lead[] {
   const rng = makeRng(slug + ":leads");
@@ -138,6 +165,8 @@ export function mockLeads(slug: string, campaigns: { id: string; name: string }[
       company: comp,
       jobTitle: ROLES[Math.floor(rng() * ROLES.length)],
       website: "https://" + domain,
+      city: CITIES[Math.floor(rng() * CITIES.length)],
+      linkedin: opens ? "https://linkedin.com/in/" + fn.toLowerCase() + "-" + ln.toLowerCase() : "",
       opens,
       clicks,
       replies,
@@ -145,6 +174,7 @@ export function mockLeads(slug: string, campaigns: { id: string; name: string }[
       statusLabel: status === 1 ? "Active" : status === 2 ? "Completed" : "Unsubscribed",
       campaignId: camp.id,
       lastContact: d.toISOString(),
+      lastOpen: opens ? d.toISOString() : null,
     });
   }
   return out;
