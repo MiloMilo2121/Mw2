@@ -30,8 +30,23 @@ function resolveApiKey(): string | undefined {
 
 // Built-in clients available without Supabase. `geriko` is the live client
 // (uses the configured Instantly key); `demo` always runs on mock data.
-const BUILTINS: Record<string, { name: string; live: boolean; accentColor: string }> = {
-  geriko: { name: "Geriko", live: true, accentColor: "#aad8d8" },
+type Builtin = {
+  name: string;
+  live: boolean;
+  accentColor: string;
+  campaignMatch?: string[];
+  accountMatch?: string[];
+};
+
+const BUILTINS: Record<string, Builtin> = {
+  geriko: {
+    name: "Geriko",
+    live: true,
+    accentColor: "#aad8d8",
+    // Scope this dashboard to Geriko's campaigns/accounts only (shared workspace).
+    campaignMatch: ["geriko", "sassi", "carretta"],
+    accountMatch: ["metodogeriko"],
+  },
   demo: { name: "Acme Outbound (Demo)", live: false, accentColor: "#aad8d8" },
 };
 
@@ -86,6 +101,8 @@ export async function getClient(slug: string): Promise<ClientConfig | null> {
       name: builtin.name,
       accentColor: builtin.accentColor,
       instantlyApiKey: builtin.live ? resolveApiKey() : undefined,
+      campaignMatch: builtin.campaignMatch,
+      accountMatch: builtin.accountMatch,
     };
   }
 

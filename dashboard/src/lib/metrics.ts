@@ -5,6 +5,8 @@ import {
   fetchAccounts,
   fetchCampaignAnalytics,
   fetchDailyAnalytics,
+  fetchDailyForCampaigns,
+  matchesKeywords,
 } from "./instantly";
 import { mockAccounts, mockCampaigns, mockDaily } from "./mock";
 import type {
@@ -136,11 +138,23 @@ export async function buildSnapshot(
 
   if (client.instantlyApiKey) {
     try {
-      [campaigns, daily, accounts] = await Promise.all([
+      const [allCampaigns, allAccounts] = await Promise.all([
         fetchCampaignAnalytics(client.instantlyApiKey, start, end),
-        fetchDailyAnalytics(client.instantlyApiKey, start, end),
         fetchAccounts(client.instantlyApiKey),
       ]);
+      // Scope to this client's campaigns/accounts within a shared workspace.
+      campaigns = allCampaigns.filter((c) => matchesKeywords(c.name, client.campaignMatch));
+      accounts = allAccounts.filter((a) => matchesKeywords(a.email, client.accountMatch));
+      // Trend: when scoped, sum the per-campaign daily series; else workspace-wide.
+      daily =
+        client.campaignMatch && client.campaignMatch.length
+          ? await fetchDailyForCampaigns(
+              client.instantlyApiKey,
+              campaigns.map((c) => c.id),
+              start,
+              end
+            )
+          : await fetchDailyAnalytics(client.instantlyApiKey, start, end);
       source = "instantly";
     } catch (err) {
       console.error(`[snapshot] Instantly fetch failed for ${client.slug}:`, err);

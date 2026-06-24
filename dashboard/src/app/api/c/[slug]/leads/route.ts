@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getClient } from "@/lib/clients";
-import { fetchLeads } from "@/lib/instantly";
+import { fetchCampaignAnalytics, fetchLeads, matchesKeywords } from "@/lib/instantly";
 import { mockCampaigns, mockLeads } from "@/lib/mock";
 import type { Lead } from "@/lib/types";
 
@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 // On-demand contact/engagement feed for the Contacts tab. Kept separate from the
-// main snapshot so the rest of the dashboard stays fast.
+// main snapshot so the rest of the dashboard stays fast. Scoped to the client's
+// own campaigns when the client is configured with a campaignMatch filter.
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ slug: string }> }
@@ -24,15 +25,29 @@ export async function GET(
 
   let leads: Lead[];
   let source: "instantly" | "mock" = "mock";
+
   if (client.instantlyApiKey) {
     try {
-      leads = await fetchLeads(client.instantlyApiKey, {
-        maxLeads: 1000,
-        campaignId: campaign || undefined,
-      });
       source = "instantly";
+      if (campaign) {
+        // Specific campaign selected in the UI.
+        leads = await fetchLeads(client.instantlyApiKey, { campaignId: campaign, maxLeads: 1000 });
+      } else if (client.campaignMatch && client.campaignMatch.length) {
+        // "All" within this client's scope: gather leads per matched campaign.
+        const all = await fetchCampaignAnalytics(client.instantlyApiKey);
+        const ids = all
+          .filter((c) => matchesKeywords(c.name, client.campaignMatch))
+          .map((c) => c.id);
+        const per = await Promise.all(
+          ids.map((id) => fetchLeads(client.instantlyApiKey!, { campaignId: id, maxLeads: 500 }))
+        );
+        leads = per.flat();
+      } else {
+        leads = await fetchLeads(client.instantlyApiKey, { maxLeads: 1000 });
+      }
     } catch (err) {
       console.error(`[leads] Instantly fetch failed for ${client.slug}:`, err);
+      source = "mock";
       leads = mockLeads(client.slug, mockCampaigns(client.slug, 30));
     }
   } else {
@@ -40,7 +55,6 @@ export async function GET(
   }
 
   let rows = leads;
-  if (campaign) rows = rows.filter((l) => l.campaignId === campaign);
   if (filter === "opened") rows = rows.filter((l) => l.opens > 0);
   else if (filter === "clicked") rows = rows.filter((l) => l.clicks > 0);
   else if (filter === "replied") rows = rows.filter((l) => l.replies > 0);

@@ -10,6 +10,10 @@ export type ClientConfig = {
   /** Instantly V2 API key — server-side only, never sent to the browser. */
   instantlyApiKey?: string;
   accentColor?: string;
+  /** Scope to campaigns whose name contains any of these (case-insensitive). */
+  campaignMatch?: string[];
+  /** Scope to sending accounts whose email contains any of these. */
+  accountMatch?: string[];
 };
 
 /** Normalised per-campaign analytics row. */

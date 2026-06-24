@@ -98,16 +98,17 @@ export async function fetchCampaignAnalytics(
   return rows.map(normCampaign).filter((c) => c.id);
 }
 
-/** GET /campaigns/analytics/daily — aggregated daily series across campaigns. */
+/** GET /campaigns/analytics/daily — daily series (optionally one campaign). */
 export async function fetchDailyAnalytics(
   apiKey: string,
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  campaignId?: string
 ): Promise<DailyPoint[]> {
   const data = await api<RawCampaignAnalytics[] | { items: RawCampaignAnalytics[] }>(
     apiKey,
     "/campaigns/analytics/daily",
-    { start_date: startDate, end_date: endDate }
+    { start_date: startDate, end_date: endDate, campaign_id: campaignId }
   );
   const rows = Array.isArray(data) ? data : data.items ?? [];
   return rows
@@ -121,6 +122,45 @@ export async function fetchDailyAnalytics(
     }))
     .filter((d) => d.date)
     .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** Sum daily series across several campaigns into a single per-date series. */
+export async function fetchDailyForCampaigns(
+  apiKey: string,
+  campaignIds: string[],
+  startDate?: string,
+  endDate?: string
+): Promise<DailyPoint[]> {
+  const series = await Promise.all(
+    campaignIds.map((id) => fetchDailyAnalytics(apiKey, startDate, endDate, id))
+  );
+  const byDate = new Map<string, DailyPoint>();
+  for (const s of series) {
+    for (const d of s) {
+      const cur = byDate.get(d.date) ?? {
+        date: d.date,
+        sent: 0,
+        opens: 0,
+        replies: 0,
+        clicks: 0,
+        bounced: 0,
+      };
+      cur.sent += d.sent;
+      cur.opens += d.opens;
+      cur.replies += d.replies;
+      cur.clicks += d.clicks;
+      cur.bounced += d.bounced;
+      byDate.set(d.date, cur);
+    }
+  }
+  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** Whether a campaign/lead name matches any of the client's keywords. */
+export function matchesKeywords(name: string, keywords?: string[]): boolean {
+  if (!keywords || keywords.length === 0) return true;
+  const n = name.toLowerCase();
+  return keywords.some((k) => n.includes(k.toLowerCase()));
 }
 
 type RawAccount = Record<string, unknown>;
