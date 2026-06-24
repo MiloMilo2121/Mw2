@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anteprima — Instantly Live Dashboard</title>
+<style>
+  :root{
+    --accent:#6366f1; --bg:#0b0d12; --panel:#12151c; --panel-2:#171b24;
+    --border:#232936; --text:#e6e9ef; --muted:#8a92a6; --good:#34d399;
+    --warn:#fbbf24; --bad:#f87171;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:24px 18px 60px}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .muted{color:var(--muted)} .accent{color:var(--accent)}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px}
+  .card2{background:var(--panel-2);border:1px solid var(--border);border-radius:12px}
+  .pulse{width:8px;height:8px;border-radius:50%;background:var(--good);
+    box-shadow:0 0 0 0 rgba(52,211,153,.7);animation:p 2s infinite;display:inline-block}
+  @keyframes p{0%{box-shadow:0 0 0 0 rgba(52,211,153,.6)}70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+  h1{font-size:24px;margin:4px 0 0} .tiny{font-size:12px}
+  .pills{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .pills button{background:transparent;color:var(--muted);border:0;padding:7px 12px;font-size:13px;cursor:pointer}
+  .pills button.on{background:var(--accent);color:#fff}
+  nav.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin:18px 0 22px;overflow-x:auto}
+  nav.tabs button{background:transparent;border:0;border-bottom:2px solid transparent;color:var(--muted);
+    padding:10px 16px;font-size:14px;cursor:pointer;white-space:nowrap}
+  nav.tabs button.on{color:var(--text);border-color:var(--accent);font-weight:600}
+  .grid{display:grid;gap:16px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  @media(min-width:640px){.kpis{grid-template-columns:repeat(3,1fr)}}
+  @media(min-width:980px){.kpis{grid-template-columns:repeat(6,1fr)}}
+  .kpi{padding:16px}
+  .kpi .lab{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  .kpi .val{font-size:22px;font-weight:700;margin-top:8px}
+  .kpi .dl{font-size:12px;margin-top:4px}
+  .two{display:grid;gap:16px;grid-template-columns:1fr}
+  @media(min-width:980px){.two{grid-template-columns:2fr 1fr}}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:11px 14px;text-align:left}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:500}
+  tbody tr{border-top:1px solid var(--border)}
+  .r{text-align:right}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+  .bar{height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden}
+  .bar>span{display:block;height:100%;border-radius:99px;background:var(--accent)}
+  .hide{display:none}
+  .btn{border:1px solid var(--border);background:transparent;color:var(--muted);border-radius:9px;padding:7px 12px;font-size:13px;cursor:pointer}
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:10px}
+  .legend span{display:flex;align-items:center;gap:6px}
+  .note{background:#1a1430;border:1px solid #34306a;border-radius:12px;padding:12px 14px;font-size:13px;color:#c9c6f0;margin-bottom:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="note">👀 Anteprima statica — stesso design dell'app reale, dati demo. Nell'app vera i dati arrivano live da Instantly e i pulsanti (commenti, export, refresh) sono attivi.</div>
+
+  <header class="row">
+    <div>
+      <div class="row" style="justify-content:flex-start;gap:8px">
+        <span class="pulse"></span>
+        <span class="tiny muted" style="text-transform:uppercase;letter-spacing:.18em">Live · Instantly</span>
+      </div>
+      <h1>Acme Outbound</h1>
+      <div class="tiny muted">Aggiornato pochi secondi fa</div>
+    </div>
+    <div class="row" style="gap:8px">
+      <div class="pills">
+        <button>7g</button><button>14g</button><button class="on">30g</button><button>90g</button>
+      </div>
+      <button class="btn">↻</button>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="on" data-t="overview">Overview</button>
+    <button data-t="campaigns">Campaigns</button>
+    <button data-t="deliverability">Deliverability</button>
+    <button data-t="feedback">Feedback</button>
+    <button data-t="report">Report</button>
+  </nav>
+
+  <section id="overview"></section>
+  <section id="campaigns" class="hide"></section>
+  <section id="deliverability" class="hide"></section>
+  <section id="feedback" class="hide"></section>
+  <section id="report" class="hide"></section>
+</div>
+
+<script>
+const fmt=n=>new Intl.NumberFormat("it-IT").format(Math.round(n));
+const pct=(a,b)=>b?(a/b*100).toFixed(1)+"%":"0%";
+const money=n=>"$"+new Intl.NumberFormat("it-IT").format(Math.round(n));
+
+// ---- demo data ----
+const CN=["Q2 Outbound — SaaS Founders","Agency Owners — Cold Seq","E-commerce DTC — Reactivation","Enterprise CTOs — ABM","Webinar Follow-up — Giugno","LinkedIn — Series A"];
+let seed=42; const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+const camps=CN.map((name,i)=>{
+  const sent=2200+Math.floor(rnd()*4200);
+  const opens=Math.floor(sent*(0.34+rnd()*0.32));
+  const replies=Math.floor(sent*(0.02+rnd()*0.05));
+  const clicks=Math.floor(opens*(0.05+rnd()*0.1));
+  const bounced=Math.floor(sent*(0.005+rnd()*0.02));
+  const opps=Math.floor(replies*(0.12+rnd()*0.25));
+  const status=i===5?2:(i===3?3:1);
+  return{name,sent,opens,replies,clicks,bounced,opps,oppv:opps*(1500+Math.floor(rnd()*6000)),status};
+});
+const T=camps.reduce((a,c)=>{a.sent+=c.sent;a.opens+=c.opens;a.replies+=c.replies;a.clicks+=c.clicks;a.bounced+=c.bounced;a.opps+=c.opps;a.oppv+=c.oppv;return a;},{sent:0,opens:0,replies:0,clicks:0,bounced:0,opps:0,oppv:0});
+const prev={sent:T.sent*0.9,opens:T.opens*0.86,replies:T.replies*1.08,opps:T.opps*0.8,bounced:T.bounced*1.1};
+const daily=Array.from({length:30},(_,d)=>{
+  const wd=(d+2)%7; const we=(wd===5||wd===6)?0.3:1; const tr=1+d/60;
+  const sent=Math.floor((900+rnd()*600)*we*tr);
+  return{sent,opens:Math.floor(sent*(0.34+rnd()*0.28)),replies:Math.floor(sent*(0.02+rnd()*0.04))};
+});
+const accs=[
+  ["emanuele@acme-mail1.com","Google",1,"Active",100],
+  ["rosa@acme-mail1.com","Google",1,"Active",98],
+  ["ivan@acme-mail2.com","Microsoft",1,"Active",95],
+  ["sales2@acme-mail2.com","Microsoft",2,"Paused",62],
+  ["growth@acme-mail3.com","Custom",-2,"Soft bounce error",34],
+  ["hello@acme-mail3.com","Google",1,"Active",91],
+].map(a=>({email:a[0],provider:a[1],status:a[2],statusLabel:a[3],warmup:a[4],
+  health:Math.max(0,Math.min(100,Math.round(35+a[4]*0.65-(a[2]<0?45:a[2]===2?15:0))))}));
+
+// ---- chart helpers ----
+function trend(data){
+  const w=720,h=240,pl=44,pr=12,pt=14,pb=26,iw=w-pl-pr,ih=h-pt-pb;
+  const keys=[["sent","var(--accent)"],["opens","#34d399"],["replies","#fbbf24"]];
+  const max=Math.max(...data.flatMap(d=>keys.map(k=>d[k[0]])))*1.15||1;
+  const X=i=>pl+(i/(data.length-1))*iw, Y=v=>pt+ih-(v/max)*ih;
+  let g="";
+  for(let i=0;i<=4;i++){const gy=pt+i/4*ih;g+=`<line x1="${pl}" x2="${w-pr}" y1="${gy}" y2="${gy}" stroke="#232936"/><text x="8" y="${gy+4}" fill="#8a92a6" font-size="10">${Math.round(max-i/4*max)}</text>`;}
+  for(const [k,c] of keys){
+    const pts=data.map((d,i)=>[X(i),Y(d[k])]);
+    const line=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+","+p[1].toFixed(1)).join(" ");
+    g+=`<path d="${line} L${X(data.length-1)},${pt+ih} L${X(0)},${pt+ih} Z" fill="${c}" opacity="0.12"/><path d="${line}" fill="none" stroke="${c}" stroke-width="2.5"/>`;
+  }
+  data.forEach((d,i)=>{if(i%5===0||i===data.length-1)g+=`<text x="${X(i)}" y="${h-8}" fill="#8a92a6" font-size="10" text-anchor="middle">${i+1}</text>`;});
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}">${g}</svg>`;
+}
+function donut(v,label,color){
+  const s=120,r=50,c=2*Math.PI*r,p=Math.max(0,Math.min(1,v));
+  return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+    <circle cx="60" cy="60" r="${r}" fill="none" stroke="#232936" stroke-width="10"/>
+    <circle cx="60" cy="60" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round"
+      stroke-dasharray="${c*p} ${c}" transform="rotate(-90 60 60)"/>
+    <text x="60" y="58" text-anchor="middle" fill="#e6e9ef" font-size="20" font-weight="700">${(p*100).toFixed(1)}%</text>
+    <text x="60" y="76" text-anchor="middle" fill="#8a92a6" font-size="10">${label}</text></svg>`;
+}
+function kpi(lab,val,cur,pv,inv){
+  let dl="";
+  if(cur!=null){const d=pv?(cur-pv)/pv:0;const pos=inv?d<0:d>0;const neu=Math.abs(d)<0.001;
+    const col=neu?"var(--muted)":pos?"var(--good)":"var(--bad)";const ar=neu?"→":d>0?"▲":"▼";
+    dl=`<span style="color:${col}">${ar} ${(Math.abs(d)*100).toFixed(1)}%</span> <span class="muted">vs prec.</span>`;}
+  return `<div class="card kpi"><div class="lab">${lab}</div><div class="val">${val}</div><div class="dl tiny">${dl}</div></div>`;
+}
+function statusDot(s){const m={0:"#8a92a6",1:"#34d399",2:"#fbbf24",3:"#60a5fa","-2":"#f87171"};return m[s]||"#8a92a6";}
+function stLabel(s){return{0:"Draft",1:"Active",2:"Paused",3:"Completed"}[s]||"—";}
+function hColor(s){return s>=75?"var(--good)":s>=50?"var(--warn)":"var(--bad)";}
+
+// ---- views ----
+document.getElementById("overview").innerHTML=`
+  <div class="grid kpis">
+    ${kpi("Emails sent",fmt(T.sent),T.sent,prev.sent)}
+    ${kpi("Open rate",pct(T.opens,T.sent),T.opens/T.sent,prev.opens/prev.sent)}
+    ${kpi("Reply rate",pct(T.replies,T.sent),T.replies/T.sent,prev.replies/prev.sent)}
+    ${kpi("Replies",fmt(T.replies),T.replies,prev.replies)}
+    ${kpi("Opportunities",fmt(T.opps),T.opps,prev.opps)}
+    ${kpi("Bounce rate",pct(T.bounced,T.sent),T.bounced/T.sent,prev.bounced/prev.sent,true)}
+  </div>
+  <div class="two" style="margin-top:16px">
+    <div class="card" style="padding:18px">
+      <div class="row"><div><b>Sending & engagement</b><div class="tiny muted">Volume giornaliero nel periodo</div></div><button class="btn">💬 Comment</button></div>
+      ${trend(daily)}
+      <div class="legend"><span><span class="dot" style="background:var(--accent)"></span>Sent</span><span><span class="dot" style="background:#34d399"></span>Opens</span><span><span class="dot" style="background:#fbbf24"></span>Replies</span></div>
+    </div>
+    <div class="card" style="padding:18px">
+      <b>Pipeline generata</b>
+      <div style="font-size:28px;font-weight:700;color:var(--accent);margin-top:6px">${money(T.oppv)}</div>
+      <div class="tiny muted">da ${fmt(T.opps)} opportunità</div>
+      <div class="row" style="justify-content:space-around;margin-top:18px">
+        ${donut(T.opens/T.sent,"Open rate","#34d399")}
+        ${donut(T.replies/T.sent,"Reply rate","var(--accent)")}
+      </div>
+    </div>
+  </div>
+  <div class="card" style="padding:18px;margin-top:16px">
+    <b style="display:block;margin-bottom:14px">Top campagne per reply</b>
+    ${[...camps].sort((a,b)=>b.replies-a.replies).slice(0,6).map(c=>{
+      const max=Math.max(...camps.map(x=>x.replies));
+      return `<div style="margin-bottom:12px"><div class="row tiny" style="margin-bottom:4px"><span>${c.name}</span><span class="muted">${fmt(c.replies)} replies · ${pct(c.opens,c.sent)} open</span></div><div class="bar"><span style="width:${c.replies/max*100}%"></span></div></div>`;
+    }).join("")}
+  </div>`;
+
+document.getElementById("campaigns").innerHTML=`
+  <div class="card" style="overflow:hidden">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)"><b>Campaign performance</b></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Campaign</th><th class="r">Sent</th><th class="r">Open</th><th class="r">Reply</th><th class="r">Clicks</th><th class="r">Bounce</th><th class="r">Opps</th><th class="r">Pipeline</th></tr></thead><tbody>
+    ${[...camps].sort((a,b)=>b.sent-a.sent).map(c=>`<tr>
+      <td><div style="font-weight:500">${c.name}</div><div class="tiny muted"><span class="dot" style="background:${statusDot(c.status)}"></span>${stLabel(c.status)}</div></td>
+      <td class="r">${fmt(c.sent)}</td>
+      <td class="r" style="color:${c.opens/c.sent>0.5?'var(--good)':''}">${pct(c.opens,c.sent)}</td>
+      <td class="r" style="color:${c.replies/c.sent>0.03?'var(--good)':''}">${pct(c.replies,c.sent)}</td>
+      <td class="r">${fmt(c.clicks)}</td>
+      <td class="r" style="color:${c.bounced/c.sent>0.03?'var(--bad)':''}">${pct(c.bounced,c.sent)}</td>
+      <td class="r">${fmt(c.opps)}</td>
+      <td class="r">${money(c.oppv)}</td></tr>`).join("")}
+    </tbody></table></div>
+  </div>`;
+
+document.getElementById("deliverability").innerHTML=`
+  <div class="grid kpis" style="grid-template-columns:repeat(2,1fr);max-width:760px">
+    <div class="card kpi"><div class="lab">Sending accounts</div><div class="val">${accs.length}</div></div>
+    <div class="card kpi"><div class="lab">Active</div><div class="val" style="color:var(--good)">${accs.filter(a=>a.status===1).length}</div></div>
+    <div class="card kpi"><div class="lab">At risk</div><div class="val" style="color:var(--bad)">${accs.filter(a=>a.status<0||a.health<50).length}</div></div>
+    <div class="card kpi"><div class="lab">Avg warmup</div><div class="val">${Math.round(accs.reduce((s,a)=>s+a.warmup,0)/accs.length)}</div></div>
+  </div>
+  <div class="card" style="overflow:hidden;margin-top:16px">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)"><b>Inbox / account health</b></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Account</th><th>Provider</th><th>Status</th><th>Warmup</th><th class="r">Daily cap</th><th>Health</th></tr></thead><tbody>
+    ${[...accs].sort((a,b)=>a.health-b.health).map(a=>`<tr>
+      <td style="font-weight:500">${a.email}</td><td class="muted">${a.provider}</td>
+      <td style="color:${a.status===1?'var(--good)':a.status===2?'var(--warn)':'var(--bad)'}">${a.statusLabel}</td>
+      <td>${a.warmup}</td><td class="r muted">40/day</td>
+      <td><div class="row" style="gap:8px;justify-content:flex-start"><div class="bar" style="width:90px"><span style="width:${a.health}%;background:${hColor(a.health)}"></span></div><span style="color:${hColor(a.health)}">${a.health}</span></div></td></tr>`).join("")}
+    </tbody></table></div>
+  </div>`;
+
+document.getElementById("feedback").innerHTML=`
+  <div class="card" style="padding:18px"><div class="row"><div><b>Feedback & collaboration</b><div class="tiny muted">Il cliente lascia note, domande o segnalazioni — tu le vedi in tempo reale.</div></div><button class="btn">💬 Comment</button></div></div>
+  <div class="card" style="padding:16px;margin-top:14px">
+    <div class="row" style="justify-content:flex-start;gap:12px;align-items:flex-start">
+      <span style="font-size:18px">💬</span><div><div class="tiny"><b>Marco</b> <span class="muted">su Q2 Outbound — SaaS Founders</span></div>
+      <div style="margin-top:4px;font-size:14px">Ottimo open rate su questa campagna, possiamo spingerla di più?</div>
+      <div class="tiny muted" style="margin-top:4px">oggi, 14:32</div></div></div>
+  </div>
+  <div class="card" style="padding:16px;margin-top:10px">
+    <div class="row" style="justify-content:flex-start;gap:12px;align-items:flex-start">
+      <span style="font-size:18px">🚩</span><div><div class="tiny"><b>Cliente</b> <span class="muted">su Deliverability</span></div>
+      <div style="margin-top:4px;font-size:14px">Un account è in soft bounce — lo sistemiamo?</div>
+      <div class="tiny muted" style="margin-top:4px">oggi, 11:08</div></div></div>
+  </div>`;
+
+document.getElementById("report").innerHTML=`
+  <div class="card" style="padding:22px">
+    <div class="row"><div><div class="tiny muted" style="text-transform:uppercase;letter-spacing:.18em">Performance report</div>
+      <div style="font-size:22px;font-weight:700;margin-top:4px">Acme Outbound</div><div class="tiny muted">ultimi 30 giorni</div></div>
+      <div class="row" style="gap:8px"><button class="btn">⬇ CSV</button><button class="btn" style="background:var(--accent);color:#fff;border-color:var(--accent)">🖨 Save as PDF</button></div></div>
+    <p style="font-size:15px;line-height:1.6;max-width:640px">In questo periodo abbiamo inviato <b>${fmt(T.sent)}</b> email, con un open rate del <b>${pct(T.opens,T.sent)}</b> e reply rate del <b>${pct(T.replies,T.sent)}</b>. Generate <b>${fmt(T.replies)}</b> risposte e <b>${fmt(T.opps)}</b> opportunità per circa <b>${money(T.oppv)}</b> di pipeline. Bounce rate al <b>${pct(T.bounced,T.sent)}</b>.</p>
+    <div class="tiny muted" style="border-top:1px solid var(--border);padding-top:12px;margin-top:8px">Generato ora · Fonte: Instantly (live)</div>
+  </div>`;
+
+// ---- tabs ----
+const secs=["overview","campaigns","deliverability","feedback","report"];
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#tabs button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");
+  secs.forEach(s=>document.getElementById(s).classList.toggle("hide",s!==b.dataset.t));
+});
+</script>
+</body>
+</html>
