@@ -73,14 +73,43 @@ function normCampaign(raw: RawCampaignAnalytics): CampaignAnalytics {
     contacted: num(raw.contacted_count),
     emailsSent: num(raw.emails_sent_count),
     opens: num(raw.open_count),
+    opensUnique: num(raw.open_count_unique),
     replies: num(raw.reply_count),
+    repliesUnique: num(raw.reply_count_unique),
     clicks: num(raw.link_click_count),
+    clicksUnique: num(raw.link_click_count_unique),
     bounced: num(raw.bounced_count),
     unsubscribed: num(raw.unsubscribed_count),
     completed: num(raw.completed_count),
     opportunities: num(raw.total_opportunities),
     opportunityValue: num(raw.total_opportunity_value),
   };
+}
+
+/** GET /campaigns/analytics/steps — per-step + A/B variant performance. */
+export async function fetchCampaignSteps(
+  apiKey: string,
+  campaignId: string,
+  startDate?: string,
+  endDate?: string
+): Promise<import("./types").CampaignStep[]> {
+  const data = await api<RawCampaignAnalytics[] | { items: RawCampaignAnalytics[] }>(
+    apiKey,
+    "/campaigns/analytics/steps",
+    { campaign_id: campaignId, start_date: startDate, end_date: endDate }
+  );
+  const rows = Array.isArray(data) ? data : data.items ?? [];
+  return rows
+    .map((r) => ({
+      step: num(r.step),
+      variant: str(r.variant, "0"),
+      sent: num(r.sent),
+      opened: num(r.opened),
+      uniqueOpened: num(r.unique_opened),
+      replies: num(r.replies),
+      clicks: num(r.clicks),
+    }))
+    .sort((a, b) => a.step - b.step || a.variant.localeCompare(b.variant));
 }
 
 /** GET /campaigns/analytics — one row per campaign for the date range. */
@@ -257,14 +286,29 @@ function normLead(raw: RawLead): import("./types").Lead {
   const email = str(raw.email);
   const status = num(raw.status);
   const lc = raw.timestamp_last_contact;
+  const lo = raw.timestamp_last_open;
+  // Custom fields live in `payload` (varies per import).
+  const p = (raw.payload && typeof raw.payload === "object" ? raw.payload : {}) as Record<
+    string,
+    unknown
+  >;
+  const pick = (...keys: string[]): string => {
+    for (const k of keys) {
+      const v = p[k] ?? (raw as Record<string, unknown>)[k];
+      if (typeof v === "string" && v.trim()) return v.trim();
+    }
+    return "";
+  };
   return {
     id: str(raw.id, email),
     email,
-    firstName: str(raw.first_name),
-    lastName: str(raw.last_name),
-    company: str(raw.company_name),
-    jobTitle: str(raw.job_title),
-    website: str(raw.website),
+    firstName: str(raw.first_name) || pick("firstName", "first_name"),
+    lastName: str(raw.last_name) || pick("lastName", "last_name"),
+    company: str(raw.company_name) || pick("companyName", "company_name", "company"),
+    jobTitle: str(raw.job_title) || pick("jobTitle", "title", "role"),
+    website: str(raw.website) || pick("website", "websiteUrl", "company_url"),
+    city: pick("city", "location", "citta"),
+    linkedin: pick("linkedIn", "linkedin", "linkedinUrl", "linkedin_url"),
     opens: num(raw.email_open_count),
     clicks: num(raw.email_click_count),
     replies: num(raw.email_reply_count),
@@ -272,6 +316,7 @@ function normLead(raw: RawLead): import("./types").Lead {
     statusLabel: leadStatusLabel(status),
     campaignId: str(raw.campaign),
     lastContact: typeof lc === "string" ? lc : null,
+    lastOpen: typeof lo === "string" ? lo : null,
   };
 }
 

@@ -87,23 +87,24 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
               <tr className="text-left text-xs uppercase tracking-wide muted">
                 <th className="px-5 py-3 font-medium">Contatto</th>
                 <th className="px-5 py-3 font-medium">Azienda</th>
+                <th className="px-5 py-3 font-medium">Città</th>
                 <th className="px-5 py-3 font-medium">Campagna</th>
                 <th className="px-5 py-3 text-right font-medium">Aperture</th>
                 <th className="px-5 py-3 text-right font-medium">Click</th>
                 <th className="px-5 py-3 text-right font-medium">Reply</th>
-                <th className="px-5 py-3 text-right font-medium">Ultimo contatto</th>
+                <th className="px-5 py-3 text-right font-medium">Ultima apertura</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && !data ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center muted">
+                  <td colSpan={8} className="px-5 py-8 text-center muted">
                     Carico i contatti…
                   </td>
                 </tr>
               ) : data && data.leads.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center muted">
+                  <td colSpan={8} className="px-5 py-8 text-center muted">
                     Nessun contatto con questo filtro.
                   </td>
                 </tr>
@@ -115,9 +116,22 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
                         {l.firstName} {l.lastName}
                         {l.jobTitle ? <span className="muted font-normal"> · {l.jobTitle}</span> : null}
                       </div>
-                      <div className="text-xs muted">{l.email}</div>
+                      <div className="flex items-center gap-2 text-xs muted">
+                        <span>{l.email}</span>
+                        {l.linkedin ? (
+                          <a href={l.linkedin} target="_blank" rel="noreferrer" className="accent" title="LinkedIn">
+                            in
+                          </a>
+                        ) : null}
+                        {l.website ? (
+                          <a href={l.website} target="_blank" rel="noreferrer" className="accent" title="Sito">
+                            ↗
+                          </a>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-5 py-3">{l.company || "—"}</td>
+                    <td className="px-5 py-3 muted">{l.city || "—"}</td>
                     <td className="px-5 py-3 muted">{campName(l.campaignId)}</td>
                     <td className="px-5 py-3 text-right tabular-nums">{fmtInt(l.opens)}</td>
                     <td
@@ -132,7 +146,7 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
                     >
                       {fmtInt(l.replies)}
                     </td>
-                    <td className="px-5 py-3 text-right muted">{fmtDate(l.lastContact)}</td>
+                    <td className="px-5 py-3 text-right muted">{fmtDate(l.lastOpen)}</td>
                   </tr>
                 ))
               )}
