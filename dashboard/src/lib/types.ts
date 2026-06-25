@@ -83,6 +83,11 @@ export type Lead = {
   website: string;
   city: string;
   linkedin: string;
+  phone: string;
+  /** MillionVerifier fields (from the imported Drive report), joined by email. */
+  quality: string;
+  result: string;
+  verified: boolean;
   opens: number;
   clicks: number;
   replies: number;

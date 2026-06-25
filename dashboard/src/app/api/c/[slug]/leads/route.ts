@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getClient } from "@/lib/clients";
 import { fetchLeads, getScopedCampaignIds } from "@/lib/instantly";
 import { mockCampaigns, mockLeads } from "@/lib/mock";
+import { getVerified } from "@/lib/verified";
 import type { Lead } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -58,6 +59,24 @@ export async function GET(
     leads = mockLeads(client.slug, mockCampaigns(client.slug, 30));
   }
 
+  // Enrich with verified Drive data (phone, quality, result, clean fields) by email.
+  leads = leads.map((l) => {
+    const v = getVerified(l.email);
+    if (!v) return l;
+    return {
+      ...l,
+      firstName: l.firstName || v.firstName,
+      company: v.companyName || l.company,
+      city: v.city || l.city,
+      jobTitle: v.jobTitle || l.jobTitle,
+      website: v.website || l.website,
+      phone: v.phone || l.phone,
+      quality: v.quality,
+      result: v.result,
+      verified: true,
+    };
+  });
+
   let rows = leads;
   if (filter === "opened") rows = rows.filter((l) => l.opens > 0);
   else if (filter === "clicked") rows = rows.filter((l) => l.clicks > 0);
@@ -80,8 +99,9 @@ export async function GET(
     replied: leads.filter((l) => l.replies > 0).length,
   };
 
+  const enriched = leads.filter((l) => l.verified).length;
   return NextResponse.json(
-    { source, total: leads.length, shown: rows.length, engaged, leads: rows.slice(0, 500) },
+    { source, total: leads.length, shown: rows.length, engaged, enriched, leads: rows.slice(0, 500) },
     { headers: { "Cache-Control": "no-store" } }
   );
 }

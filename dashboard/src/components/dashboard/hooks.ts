@@ -38,6 +38,7 @@ export type LeadsResponse = {
   source: "instantly" | "mock";
   total: number;
   shown: number;
+  enriched?: number;
   engaged: { opened: number; clicked: number; replied: number };
   leads: Lead[];
 };

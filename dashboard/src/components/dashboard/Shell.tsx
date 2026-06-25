@@ -7,12 +7,14 @@ import { CampaignsTab } from "./CampaignsTab";
 import { StepsTab } from "./StepsTab";
 import { DeliverabilityTab } from "./DeliverabilityTab";
 import { ContactsTab } from "./ContactsTab";
+import { EngagementTab } from "./EngagementTab";
 import { FeedbackTab } from "./FeedbackTab";
 import { ReportTab } from "./ReportTab";
 import { fmtDateTime } from "@/lib/format";
 
 type Tab =
   | "overview"
+  | "engagement"
   | "campaigns"
   | "steps"
   | "contacts"
@@ -22,6 +24,7 @@ type Tab =
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "overview", label: "Overview" },
+  { id: "engagement", label: "Aperture & Click" },
   { id: "campaigns", label: "Campaigns" },
   { id: "steps", label: "Sequenza" },
   { id: "contacts", label: "Contatti" },
@@ -120,6 +123,7 @@ export function Shell({ slug }: { slug: string }) {
       ) : (
         <div className={isLoading ? "opacity-70 transition" : "transition"}>
           {tab === "overview" && <OverviewTab snap={snapshot} slug={slug} />}
+          {tab === "engagement" && <EngagementTab snap={snapshot} slug={slug} />}
           {tab === "campaigns" && <CampaignsTab snap={snapshot} slug={slug} />}
           {tab === "steps" && <StepsTab snap={snapshot} slug={slug} />}
           {tab === "contacts" && <ContactsTab snap={snapshot} slug={slug} />}
