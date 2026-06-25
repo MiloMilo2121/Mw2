@@ -17,7 +17,7 @@ export function OverviewTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
       label: c.name,
       value: c.replies,
       sub: `${fmtInt(c.replies)} replies · ${fmtPct(
-        c.emailsSent ? c.opens / c.emailsSent : 0
+        c.emailsSent ? c.opensUnique / c.emailsSent : 0
       )} open`,
     }));
 

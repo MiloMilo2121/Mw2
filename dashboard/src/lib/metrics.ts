@@ -58,9 +58,11 @@ export function totalsFromCampaigns(campaigns: CampaignAnalytics[]): Totals {
     t.opportunities += c.opportunities;
     t.opportunityValue += c.opportunityValue;
   }
-  t.openRate = t.emailsSent ? t.opens / t.emailsSent : 0;
-  t.replyRate = t.emailsSent ? t.replies / t.emailsSent : 0;
-  t.clickRate = t.emailsSent ? t.clicks / t.emailsSent : 0;
+  // Rates use UNIQUE counts to match Instantly's native dashboard (one person =
+  // one open), so the headline numbers line up with what the client sees there.
+  t.openRate = t.emailsSent ? t.opensUnique / t.emailsSent : 0;
+  t.replyRate = t.emailsSent ? t.repliesUnique / t.emailsSent : 0;
+  t.clickRate = t.emailsSent ? t.clicksUnique / t.emailsSent : 0;
   t.bounceRate = t.emailsSent ? t.bounced / t.emailsSent : 0;
   return t;
 }
@@ -120,9 +122,9 @@ function estimatePrevious(current: Totals, first: Totals, second: Totals): Total
     completed: Math.round(current.completed * fSent),
     opportunities: Math.round(current.opportunities * fReplies),
     opportunityValue: Math.round(current.opportunityValue * fReplies),
-    openRate: emailsSent ? opens / emailsSent : 0,
-    replyRate: emailsSent ? replies / emailsSent : 0,
-    clickRate: emailsSent ? clicks / emailsSent : 0,
+    openRate: emailsSent ? Math.round(current.opensUnique * fOpens) / emailsSent : 0,
+    replyRate: emailsSent ? Math.round(current.repliesUnique * fReplies) / emailsSent : 0,
+    clickRate: emailsSent ? Math.round(current.clicksUnique * fClicks) / emailsSent : 0,
     bounceRate: emailsSent ? bounced / emailsSent : 0,
   };
 }

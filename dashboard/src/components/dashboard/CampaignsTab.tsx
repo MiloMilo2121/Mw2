@@ -13,8 +13,8 @@ export function CampaignsTab({ snap, slug }: { snap: DashboardSnapshot; slug: st
   const rows = [...snap.campaigns]
     .map((c) => ({
       ...c,
-      openRate: c.emailsSent ? c.opens / c.emailsSent : 0,
-      replyRate: c.emailsSent ? c.replies / c.emailsSent : 0,
+      openRate: c.emailsSent ? c.opensUnique / c.emailsSent : 0,
+      replyRate: c.emailsSent ? c.repliesUnique / c.emailsSent : 0,
       bounceRate: c.emailsSent ? c.bounced / c.emailsSent : 0,
     }))
     .sort((a, b) => (b[sort] as number) - (a[sort] as number));
