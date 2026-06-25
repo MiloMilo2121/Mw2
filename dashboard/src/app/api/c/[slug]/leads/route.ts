@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getClient } from "@/lib/clients";
-import { fetchCampaignAnalytics, fetchLeads, matchesKeywords } from "@/lib/instantly";
+import { fetchLeads, getScopedCampaignIds } from "@/lib/instantly";
 import { mockCampaigns, mockLeads } from "@/lib/mock";
 import type { Lead } from "@/lib/types";
 
@@ -32,18 +32,22 @@ export async function GET(
       if (campaign) {
         // Specific campaign selected in the UI.
         leads = await fetchLeads(client.instantlyApiKey, { campaignId: campaign, maxLeads: 1000 });
-      } else if (client.campaignMatch && client.campaignMatch.length) {
-        // "All" within this client's scope: gather leads per matched campaign.
-        const all = await fetchCampaignAnalytics(client.instantlyApiKey);
-        const ids = all
-          .filter((c) => matchesKeywords(c.name, client.campaignMatch))
-          .map((c) => c.id);
-        const per = await Promise.all(
-          ids.map((id) => fetchLeads(client.instantlyApiKey!, { campaignId: id, maxLeads: 500 }))
-        );
-        leads = per.flat();
       } else {
-        leads = await fetchLeads(client.instantlyApiKey, { maxLeads: 1000 });
+        // "All" within this client's scope: gather leads per scoped campaign.
+        const scopedIds = await getScopedCampaignIds(client.instantlyApiKey, {
+          accountKeywords: client.campaignAccountMatch,
+          nameKeywords: client.campaignMatch,
+        });
+        if (scopedIds) {
+          const per = await Promise.all(
+            [...scopedIds].map((id) =>
+              fetchLeads(client.instantlyApiKey!, { campaignId: id, maxLeads: 500 })
+            )
+          );
+          leads = per.flat();
+        } else {
+          leads = await fetchLeads(client.instantlyApiKey, { maxLeads: 1000 });
+        }
       }
     } catch (err) {
       console.error(`[leads] Instantly fetch failed for ${client.slug}:`, err);

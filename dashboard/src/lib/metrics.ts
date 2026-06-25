@@ -6,6 +6,7 @@ import {
   fetchCampaignAnalytics,
   fetchDailyAnalytics,
   fetchDailyForCampaigns,
+  getScopedCampaignIds,
   matchesKeywords,
 } from "./instantly";
 import { mockAccounts, mockCampaigns, mockDaily } from "./mock";
@@ -152,23 +153,26 @@ export async function buildSnapshot(
 
   if (client.instantlyApiKey) {
     try {
-      const [allCampaigns, allAccounts] = await Promise.all([
+      // Scope to this client's campaigns (by sending account) + accounts.
+      const [scopedIds, allCampaigns, allAccounts] = await Promise.all([
+        getScopedCampaignIds(client.instantlyApiKey, {
+          accountKeywords: client.campaignAccountMatch,
+          nameKeywords: client.campaignMatch,
+        }),
         fetchCampaignAnalytics(client.instantlyApiKey, start, end),
         fetchAccounts(client.instantlyApiKey),
       ]);
-      // Scope to this client's campaigns/accounts within a shared workspace.
-      campaigns = allCampaigns.filter((c) => matchesKeywords(c.name, client.campaignMatch));
+      campaigns = scopedIds ? allCampaigns.filter((c) => scopedIds.has(c.id)) : allCampaigns;
       accounts = allAccounts.filter((a) => matchesKeywords(a.email, client.accountMatch));
       // Trend: when scoped, sum the per-campaign daily series; else workspace-wide.
-      daily =
-        client.campaignMatch && client.campaignMatch.length
-          ? await fetchDailyForCampaigns(
-              client.instantlyApiKey,
-              campaigns.map((c) => c.id),
-              start,
-              end
-            )
-          : await fetchDailyAnalytics(client.instantlyApiKey, start, end);
+      daily = scopedIds
+        ? await fetchDailyForCampaigns(
+            client.instantlyApiKey,
+            campaigns.map((c) => c.id),
+            start,
+            end
+          )
+        : await fetchDailyAnalytics(client.instantlyApiKey, start, end);
       source = "instantly";
     } catch (err) {
       console.error(`[snapshot] Instantly fetch failed for ${client.slug}:`, err);

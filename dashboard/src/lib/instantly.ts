@@ -192,6 +192,56 @@ export function matchesKeywords(name: string, keywords?: string[]): boolean {
   return keywords.some((k) => n.includes(k.toLowerCase()));
 }
 
+type CampaignLite = { id: string; name: string; status: number; accounts: string[] };
+
+/** GET /campaigns — light list incl. each campaign's sending accounts (email_list). */
+export async function fetchCampaignsLite(apiKey: string): Promise<CampaignLite[]> {
+  const out: CampaignLite[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < 10; page++) {
+    const data = await api<{ items?: Record<string, unknown>[]; next_starting_after?: string }>(
+      apiKey,
+      "/campaigns",
+      { limit: 100, starting_after: cursor }
+    );
+    const items = data.items ?? [];
+    for (const c of items) {
+      out.push({
+        id: str(c.id),
+        name: str(c.name),
+        status: num(c.status),
+        accounts: Array.isArray(c.email_list) ? (c.email_list as unknown[]).map((e) => String(e)) : [],
+      });
+    }
+    if (!data.next_starting_after || items.length === 0) break;
+    cursor = data.next_starting_after;
+  }
+  return out.filter((c) => c.id);
+}
+
+/**
+ * Resolve the set of campaign IDs this client is scoped to.
+ * Prefers matching by SENDING ACCOUNT (accountKeywords); falls back to campaign
+ * NAME keywords; returns null when there is no scope (all campaigns).
+ */
+export async function getScopedCampaignIds(
+  apiKey: string,
+  opts: { accountKeywords?: string[]; nameKeywords?: string[] }
+): Promise<Set<string> | null> {
+  if (opts.accountKeywords && opts.accountKeywords.length) {
+    const camps = await fetchCampaignsLite(apiKey);
+    const ids = camps
+      .filter((c) => c.accounts.some((a) => matchesKeywords(a, opts.accountKeywords)))
+      .map((c) => c.id);
+    return new Set(ids);
+  }
+  if (opts.nameKeywords && opts.nameKeywords.length) {
+    const camps = await fetchCampaignAnalytics(apiKey);
+    return new Set(camps.filter((c) => matchesKeywords(c.name, opts.nameKeywords)).map((c) => c.id));
+  }
+  return null;
+}
+
 type RawAccount = Record<string, unknown>;
 
 function accountStatusLabel(status: number): string {

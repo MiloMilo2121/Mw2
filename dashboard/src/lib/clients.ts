@@ -35,6 +35,7 @@ type Builtin = {
   live: boolean;
   accentColor: string;
   campaignMatch?: string[];
+  campaignAccountMatch?: string[];
   accountMatch?: string[];
 };
 
@@ -43,8 +44,9 @@ const BUILTINS: Record<string, Builtin> = {
     name: "Geriko",
     live: true,
     accentColor: "#aad8d8",
-    // Scope this dashboard to Geriko's campaigns/accounts only (shared workspace).
-    campaignMatch: ["geriko", "sassi", "carretta"],
+    // Geriko's campaigns are the ones that SEND from rosa/emanuele @metodogeriko.it
+    // (robust regardless of campaign name), and its accounts are @metodogeriko.
+    campaignAccountMatch: ["metodogeriko"],
     accountMatch: ["metodogeriko"],
   },
   demo: { name: "Acme Outbound (Demo)", live: false, accentColor: "#aad8d8" },
@@ -102,6 +104,7 @@ export async function getClient(slug: string): Promise<ClientConfig | null> {
       accentColor: builtin.accentColor,
       instantlyApiKey: builtin.live ? resolveApiKey() : undefined,
       campaignMatch: builtin.campaignMatch,
+      campaignAccountMatch: builtin.campaignAccountMatch,
       accountMatch: builtin.accountMatch,
     };
   }

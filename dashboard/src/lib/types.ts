@@ -12,6 +12,8 @@ export type ClientConfig = {
   accentColor?: string;
   /** Scope to campaigns whose name contains any of these (case-insensitive). */
   campaignMatch?: string[];
+  /** Scope to campaigns that SEND from accounts matching any of these (preferred). */
+  campaignAccountMatch?: string[];
   /** Scope to sending accounts whose email contains any of these. */
   accountMatch?: string[];
 };
