@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { DashboardSnapshot } from "@/lib/types";
 import { useSteps } from "./hooks";
 import { FeedbackButton } from "./FeedbackButton";
-import { fmtInt, fmtPct } from "@/lib/format";
+import { fmtInt, fmtPct, rate } from "@/lib/format";
 
 // Per-step funnel + A/B variant performance for one campaign sequence.
 export function StepsTab({ snap, slug }: { snap: DashboardSnapshot; slug: string }) {
@@ -77,9 +77,9 @@ export function StepsTab({ snap, slug }: { snap: DashboardSnapshot; slug: string
                         />
                       </div>
                       <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                        <Metric label="Aperture" value={fmtPct(s.sent ? s.opened / s.sent : 0)} sub={`${fmtInt(s.uniqueOpened)} uniche`} />
-                        <Metric label="Click" value={fmtPct(s.sent ? s.clicks / s.sent : 0)} sub={`${fmtInt(s.clicks)}`} />
-                        <Metric label="Reply" value={fmtPct(s.sent ? s.replies / s.sent : 0)} sub={`${fmtInt(s.replies)}`} good={s.replies > 0} />
+                        <Metric label="Aperture" value={fmtPct(rate(s.uniqueOpened, s.sent))} sub={`${fmtInt(s.uniqueOpened)} uniche`} />
+                        <Metric label="Click" value={fmtPct(rate(s.clicks, s.sent))} sub={`${fmtInt(s.clicks)}`} />
+                        <Metric label="Reply" value={fmtPct(rate(s.replies, s.sent))} sub={`${fmtInt(s.replies)}`} good={s.replies > 0} />
                       </div>
                     </div>
                   ))}

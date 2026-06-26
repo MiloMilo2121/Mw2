@@ -88,6 +88,7 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
                 <th className="px-5 py-3 font-medium">Contatto</th>
                 <th className="px-5 py-3 font-medium">Azienda</th>
                 <th className="px-5 py-3 font-medium">Città</th>
+                <th className="px-5 py-3 font-medium">Telefono</th>
                 <th className="px-5 py-3 font-medium">Campagna</th>
                 <th className="px-5 py-3 text-right font-medium">Aperture</th>
                 <th className="px-5 py-3 text-right font-medium">Click</th>
@@ -98,13 +99,13 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
             <tbody>
               {isLoading && !data ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-8 text-center muted">
+                  <td colSpan={9} className="px-5 py-8 text-center muted">
                     Carico i contatti…
                   </td>
                 </tr>
               ) : data && data.leads.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-8 text-center muted">
+                  <td colSpan={9} className="px-5 py-8 text-center muted">
                     Nessun contatto con questo filtro.
                   </td>
                 </tr>
@@ -132,6 +133,15 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
                     </td>
                     <td className="px-5 py-3">{l.company || "—"}</td>
                     <td className="px-5 py-3 muted">{l.city || "—"}</td>
+                    <td className="px-5 py-3">
+                      {l.phone ? (
+                        <a href={`tel:${l.phone.replace(/\s/g, "")}`} className="font-medium accent">
+                          {l.phone}
+                        </a>
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
+                    </td>
                     <td className="px-5 py-3 muted">{campName(l.campaignId)}</td>
                     <td className="px-5 py-3 text-right tabular-nums">{fmtInt(l.opens)}</td>
                     <td

@@ -3,7 +3,7 @@
 import type { DashboardSnapshot } from "@/lib/types";
 import { KpiCard } from "@/components/KpiCard";
 import { BarRows, Donut, TrendChart } from "@/components/Charts";
-import { fmtInt, fmtMoney, fmtPct } from "@/lib/format";
+import { fmtInt, fmtMoney, fmtPct, rate } from "@/lib/format";
 import { FeedbackButton } from "./FeedbackButton";
 
 export function OverviewTab({ snap, slug }: { snap: DashboardSnapshot; slug: string }) {
@@ -16,9 +16,7 @@ export function OverviewTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
     .map((c) => ({
       label: c.name,
       value: c.replies,
-      sub: `${fmtInt(c.replies)} replies · ${fmtPct(
-        c.emailsSent ? c.opensUnique / c.emailsSent : 0
-      )} open`,
+      sub: `${fmtInt(c.replies)} replies · ${fmtPct(rate(c.opensUnique, c.emailsSent))} open`,
     }));
 
   return (
@@ -36,7 +34,7 @@ export function OverviewTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
       <div className="card grid grid-cols-2 gap-y-3 px-5 py-4 text-sm sm:grid-cols-3 lg:grid-cols-6">
         <Mini label="Lead totali" value={fmtInt(t.leads)} />
         <Mini label="Contattati" value={fmtInt(t.contacted)} />
-        <Mini label="Aperture uniche" value={fmtInt(t.opensUnique)} sub={fmtPct(t.emailsSent ? t.opensUnique / t.emailsSent : 0)} />
+        <Mini label="Aperture uniche" value={fmtInt(t.opensUnique)} sub={fmtPct(rate(t.opensUnique, t.emailsSent))} />
         <Mini label="Click unici" value={fmtInt(t.clicksUnique)} />
         <Mini label="Completati" value={fmtInt(t.completed)} />
         <Mini label="Disiscritti" value={fmtInt(t.unsubscribed)} />

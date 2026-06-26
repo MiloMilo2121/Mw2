@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { DashboardSnapshot } from "@/lib/types";
-import { campaignStatusLabel, fmtInt, fmtMoney, fmtPct } from "@/lib/format";
+import { campaignStatusLabel, fmtInt, fmtMoney, fmtPct, rate } from "@/lib/format";
 import { FeedbackButton } from "./FeedbackButton";
 
 type SortKey = "emailsSent" | "openRate" | "replyRate" | "opportunities";
@@ -13,9 +13,9 @@ export function CampaignsTab({ snap, slug }: { snap: DashboardSnapshot; slug: st
   const rows = [...snap.campaigns]
     .map((c) => ({
       ...c,
-      openRate: c.emailsSent ? c.opensUnique / c.emailsSent : 0,
-      replyRate: c.emailsSent ? c.repliesUnique / c.emailsSent : 0,
-      bounceRate: c.emailsSent ? c.bounced / c.emailsSent : 0,
+      openRate: rate(c.opensUnique, c.emailsSent),
+      replyRate: rate(c.repliesUnique, c.emailsSent),
+      bounceRate: rate(c.bounced, c.emailsSent),
     }))
     .sort((a, b) => (b[sort] as number) - (a[sort] as number));
 

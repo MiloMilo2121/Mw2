@@ -9,6 +9,7 @@ import {
   getScopedLiteCampaigns,
   matchesKeywords,
 } from "./instantly";
+import { rate } from "./format";
 
 function zeroCampaign(id: string, name: string, status: number): CampaignAnalytics {
   return {
@@ -70,11 +71,12 @@ export function totalsFromCampaigns(campaigns: CampaignAnalytics[]): Totals {
     t.opportunityValue += c.opportunityValue;
   }
   // Rates use UNIQUE counts to match Instantly's native dashboard (one person =
-  // one open), so the headline numbers line up with what the client sees there.
-  t.openRate = t.emailsSent ? t.opensUnique / t.emailsSent : 0;
-  t.replyRate = t.emailsSent ? t.repliesUnique / t.emailsSent : 0;
-  t.clickRate = t.emailsSent ? t.clicksUnique / t.emailsSent : 0;
-  t.bounceRate = t.emailsSent ? t.bounced / t.emailsSent : 0;
+  // one open). Capped at 100% because Apple Mail Privacy / image pre-fetch can
+  // inflate opens above the (period-bounded) send count.
+  t.openRate = rate(t.opensUnique, t.emailsSent);
+  t.replyRate = rate(t.repliesUnique, t.emailsSent);
+  t.clickRate = rate(t.clicksUnique, t.emailsSent);
+  t.bounceRate = rate(t.bounced, t.emailsSent);
   return t;
 }
 
@@ -133,10 +135,10 @@ function estimatePrevious(current: Totals, first: Totals, second: Totals): Total
     completed: Math.round(current.completed * fSent),
     opportunities: Math.round(current.opportunities * fReplies),
     opportunityValue: Math.round(current.opportunityValue * fReplies),
-    openRate: emailsSent ? Math.round(current.opensUnique * fOpens) / emailsSent : 0,
-    replyRate: emailsSent ? Math.round(current.repliesUnique * fReplies) / emailsSent : 0,
-    clickRate: emailsSent ? Math.round(current.clicksUnique * fClicks) / emailsSent : 0,
-    bounceRate: emailsSent ? bounced / emailsSent : 0,
+    openRate: rate(Math.round(current.opensUnique * fOpens), emailsSent),
+    replyRate: rate(Math.round(current.repliesUnique * fReplies), emailsSent),
+    clickRate: rate(Math.round(current.clicksUnique * fClicks), emailsSent),
+    bounceRate: rate(bounced, emailsSent),
   };
 }
 

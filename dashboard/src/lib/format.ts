@@ -4,6 +4,12 @@ export function fmtInt(n: number): string {
   return new Intl.NumberFormat("en-US").format(Math.round(n || 0));
 }
 
+/** A ratio num/den, clamped to [0,1] (open rates can exceed sends via MPP). */
+export function rate(num: number, den: number): number {
+  if (!den) return 0;
+  return Math.max(0, Math.min(1, num / den));
+}
+
 export function fmtPct(rate: number, digits = 1): string {
   if (!isFinite(rate)) return "0%";
   return `${(rate * 100).toFixed(digits)}%`;
