@@ -8,6 +8,7 @@ import { StepsTab } from "./StepsTab";
 import { DeliverabilityTab } from "./DeliverabilityTab";
 import { ContactsTab } from "./ContactsTab";
 import { EngagementTab } from "./EngagementTab";
+import { AutomationsTab } from "./AutomationsTab";
 import { FeedbackTab } from "./FeedbackTab";
 import { ReportTab } from "./ReportTab";
 import { fmtDateTime } from "@/lib/format";
@@ -20,6 +21,7 @@ type Tab =
   | "steps"
   | "contacts"
   | "deliverability"
+  | "automations"
   | "feedback"
   | "report";
 
@@ -30,6 +32,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "steps", label: "Sequenza" },
   { id: "contacts", label: "Contatti" },
   { id: "deliverability", label: "Deliverability" },
+  { id: "automations", label: "Automazioni" },
   { id: "feedback", label: "Feedback" },
   { id: "report", label: "Report" },
 ];
@@ -132,6 +135,7 @@ export function Shell({ slug }: { slug: string }) {
           {tab === "steps" && <StepsTab snap={snapshot} slug={slug} />}
           {tab === "contacts" && <ContactsTab snap={snapshot} slug={slug} />}
           {tab === "deliverability" && <DeliverabilityTab snap={snapshot} slug={slug} />}
+          {tab === "automations" && <AutomationsTab slug={slug} />}
           {tab === "feedback" && <FeedbackTab slug={slug} />}
           {tab === "report" && <ReportTab snap={snapshot} slug={slug} />}
         </div>

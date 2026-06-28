@@ -71,6 +71,30 @@ export function useSteps(slug: string, campaign: string) {
   return { steps: data?.steps ?? [], isLoading };
 }
 
+export type AutomationReport = {
+  id: string;
+  name: string;
+  description: string;
+  minDays: number;
+  dryRun: boolean;
+  totalEligible: number;
+  results: {
+    sourceName: string;
+    targetName: string;
+    eligible: { email: string; firstName: string; company: string; daysSinceLastStep: number }[];
+    error?: string;
+  }[];
+};
+
+export function useAutomations(slug: string) {
+  const { data, isLoading } = useSWR<{ automations: AutomationReport[] }>(
+    `/api/c/${slug}/automations`,
+    fetcher,
+    { refreshInterval: 300_000, keepPreviousData: true }
+  );
+  return { automations: data?.automations ?? [], isLoading };
+}
+
 export async function postFeedback(
   slug: string,
   payload: {

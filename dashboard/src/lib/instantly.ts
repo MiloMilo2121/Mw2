@@ -464,4 +464,54 @@ export async function fetchLeads(
   return out.filter((l) => l.email);
 }
 
+// ── Automation helpers ───────────────────────────────────────────────────────
+
+/** Raw lead objects for a campaign (keeps status_summary etc. for automations). */
+export async function fetchRawCampaignLeads(
+  apiKey: string,
+  campaignId: string,
+  maxLeads = 2000
+): Promise<RawLead[]> {
+  const out: RawLead[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < Math.ceil(maxLeads / 100); page++) {
+    const body: Record<string, unknown> = { limit: 100, campaign: campaignId };
+    if (cursor) body.starting_after = cursor;
+    const res = await fetch(BASE_URL + "/leads/list", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      cache: "no-store",
+    });
+    if (!res.ok) throw new InstantlyError(`/leads/list ${res.status}`, res.status);
+    const data = (await res.json()) as { items?: RawLead[]; next_starting_after?: string };
+    const items = data.items ?? [];
+    out.push(...items);
+    if (!data.next_starting_after || items.length === 0 || out.length >= maxLeads) break;
+    cursor = data.next_starting_after;
+  }
+  return out;
+}
+
+/** Bulk-add leads (by email + fields) to a destination campaign. LIVE write. */
+export async function addLeadsToCampaign(
+  apiKey: string,
+  campaignId: string,
+  leads: Array<Record<string, unknown>>
+): Promise<{ ok: boolean; status: number; body: string }> {
+  const res = await fetch(BASE_URL + "/leads/list", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      campaign_id: campaignId,
+      skip_if_in_campaign: true,
+      skip_if_in_workspace: false,
+      leads,
+    }),
+    cache: "no-store",
+  });
+  const text = await res.text().catch(() => "");
+  return { ok: res.ok, status: res.status, body: text.slice(0, 300) };
+}
+
 export { InstantlyError };
