@@ -59,7 +59,7 @@ export function Shell({ slug }: { slug: string }) {
             <div className="flex items-center gap-2">
               <span className="pulse-dot" />
               <span className="text-xs uppercase tracking-widest muted">
-                Live · {snapshot?.source === "instantly" ? "Instantly" : "Demo"}
+                {!snapshot ? "Live" : snapshot.source === "instantly" ? "Live · Instantly" : "Live · Demo"}
               </span>
             </div>
             <h1 className="mt-0.5 text-2xl font-bold leading-tight">
