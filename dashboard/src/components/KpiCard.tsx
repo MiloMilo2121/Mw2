@@ -35,7 +35,7 @@ export function KpiCard({
             {arrow} {fmtPct(Math.abs(d), 1)}
           </span>
         ) : null}
-        <span className="muted">{hint ?? "vs previous period"}</span>
+        <span className="muted">{hint ?? "vs periodo prec."}</span>
       </div>
     </div>
   );

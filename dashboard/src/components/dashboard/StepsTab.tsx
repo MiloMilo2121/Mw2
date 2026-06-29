@@ -79,7 +79,7 @@ export function StepsTab({ snap, slug }: { snap: DashboardSnapshot; slug: string
                       <div className="grid grid-cols-3 gap-2 text-center text-sm">
                         <Metric label="Aperture" value={fmtPct(rate(s.uniqueOpened, s.sent))} sub={`${fmtInt(s.uniqueOpened)} uniche`} />
                         <Metric label="Click" value={fmtPct(rate(s.clicks, s.sent))} sub={`${fmtInt(s.clicks)}`} />
-                        <Metric label="Reply" value={fmtPct(rate(s.replies, s.sent))} sub={`${fmtInt(s.replies)}`} good={s.replies > 0} />
+                        <Metric label="Risposta" value={fmtPct(rate(s.replies, s.sent))} sub={`${fmtInt(s.replies)}`} good={s.replies > 0} />
                       </div>
                     </div>
                   ))}

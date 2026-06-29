@@ -22,18 +22,18 @@ export function CampaignsTab({ snap, slug }: { snap: DashboardSnapshot; slug: st
   return (
     <div className="card overflow-hidden">
       <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
-        <div className="font-semibold">Campaign performance</div>
+        <div className="font-semibold">Performance campagne</div>
         <div className="flex items-center gap-2 text-xs no-print">
-          <span className="muted">Sort by</span>
+          <span className="muted">Ordina per</span>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
             className="rounded-md card-2 px-2 py-1 outline-none"
           >
-            <option value="emailsSent">Emails sent</option>
-            <option value="openRate">Open rate</option>
-            <option value="replyRate">Reply rate</option>
-            <option value="opportunities">Opportunities</option>
+            <option value="emailsSent">Email inviate</option>
+            <option value="openRate">Tasso apertura</option>
+            <option value="replyRate">Tasso risposta</option>
+            <option value="opportunities">Opportunità</option>
           </select>
         </div>
       </div>
@@ -42,13 +42,13 @@ export function CampaignsTab({ snap, slug }: { snap: DashboardSnapshot; slug: st
         <table className="w-full min-w-[860px] text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide muted">
-              <Th>Campaign</Th>
-              <Th right>Sent</Th>
-              <Th right>Open</Th>
-              <Th right>Reply</Th>
-              <Th right>Clicks</Th>
+              <Th>Campagna</Th>
+              <Th right>Inviate</Th>
+              <Th right>Apertura</Th>
+              <Th right>Risposta</Th>
+              <Th right>Click</Th>
               <Th right>Bounce</Th>
-              <Th right>Opps</Th>
+              <Th right>Opp.</Th>
               <Th right>Pipeline</Th>
               <Th />
             </tr>

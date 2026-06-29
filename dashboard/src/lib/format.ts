@@ -1,7 +1,7 @@
 // Small formatting helpers shared across the UI.
 
 export function fmtInt(n: number): string {
-  return new Intl.NumberFormat("en-US").format(Math.round(n || 0));
+  return new Intl.NumberFormat("it-IT").format(Math.round(n || 0));
 }
 
 /** A ratio num/den, clamped to [0,1] (open rates can exceed sends via MPP). */
@@ -16,21 +16,21 @@ export function fmtPct(rate: number, digits = 1): string {
 }
 
 export function fmtMoney(n: number): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("it-IT", {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
     maximumFractionDigits: 0,
   }).format(n || 0);
 }
 
 export function fmtDateShort(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return d.toLocaleDateString("it-IT", { month: "short", day: "numeric" });
 }
 
 export function fmtDateTime(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleString("en-US", {
+  return d.toLocaleString("it-IT", {
     month: "short",
     day: "numeric",
     hour: "2-digit",
@@ -47,14 +47,14 @@ export function delta(current: number, previous: number): number {
 export function campaignStatusLabel(status: number): string {
   switch (status) {
     case 0:
-      return "Draft";
+      return "Bozza";
     case 1:
-      return "Active";
+      return "Attiva";
     case 2:
-      return "Paused";
+      return "In pausa";
     case 3:
-      return "Completed";
+      return "Completata";
     default:
-      return "Unknown";
+      return "Sconosciuto";
   }
 }

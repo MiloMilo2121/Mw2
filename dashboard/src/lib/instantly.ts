@@ -277,17 +277,17 @@ type RawAccount = Record<string, unknown>;
 function accountStatusLabel(status: number): string {
   switch (status) {
     case 1:
-      return "Active";
+      return "Attivo";
     case 2:
-      return "Paused";
+      return "In pausa";
     case -1:
-      return "Connection error";
+      return "Errore connessione";
     case -2:
-      return "Soft bounce error";
+      return "Errore soft bounce";
     case -3:
-      return "Sending error";
+      return "Errore invio";
     default:
-      return "Unknown";
+      return "Sconosciuto";
   }
 }
 
@@ -346,15 +346,15 @@ export async function fetchAccounts(apiKey: string): Promise<AccountHealth[]> {
 function leadStatusLabel(status: number): string {
   switch (status) {
     case 1:
-      return "Active";
+      return "Attivo";
     case 2:
-      return "Completed";
+      return "Completato";
     case 3:
-      return "Unsubscribed";
+      return "Disiscritto";
     case -1:
-      return "Bounced";
+      return "Rimbalzato";
     case -2:
-      return "Stopped";
+      return "Fermato";
     default:
       return "—";
   }
