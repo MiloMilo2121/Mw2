@@ -16,18 +16,18 @@ export function OverviewTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
     .map((c) => ({
       label: c.name,
       value: c.replies,
-      sub: `${fmtInt(c.replies)} replies · ${fmtPct(rate(c.opensUnique, c.emailsSent))} open`,
+      sub: `${fmtInt(c.replies)} risposte · ${fmtPct(rate(c.opensUnique, c.emailsSent))} apertura`,
     }));
 
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-        <KpiCard label="Emails sent" value={fmtInt(t.emailsSent)} current={t.emailsSent} previous={p.emailsSent} />
-        <KpiCard label="Open rate" value={fmtPct(t.openRate)} current={t.openRate} previous={p.openRate} />
-        <KpiCard label="Reply rate" value={fmtPct(t.replyRate)} current={t.replyRate} previous={p.replyRate} />
-        <KpiCard label="Replies" value={fmtInt(t.replies)} current={t.replies} previous={p.replies} />
-        <KpiCard label="Opportunities" value={fmtInt(t.opportunities)} current={t.opportunities} previous={p.opportunities} hint="vs prev · pipeline" />
-        <KpiCard label="Bounce rate" value={fmtPct(t.bounceRate)} current={t.bounceRate} previous={p.bounceRate} invertDelta hint="lower is better" />
+        <KpiCard label="Email inviate" value={fmtInt(t.emailsSent)} current={t.emailsSent} previous={p.emailsSent} />
+        <KpiCard label="Tasso apertura" value={fmtPct(t.openRate)} current={t.openRate} previous={p.openRate} />
+        <KpiCard label="Tasso risposta" value={fmtPct(t.replyRate)} current={t.replyRate} previous={p.replyRate} />
+        <KpiCard label="Risposte" value={fmtInt(t.replies)} current={t.replies} previous={p.replies} />
+        <KpiCard label="Opportunità" value={fmtInt(t.opportunities)} current={t.opportunities} previous={p.opportunities} hint="vs prec · pipeline" />
+        <KpiCard label="Tasso bounce" value={fmtPct(t.bounceRate)} current={t.bounceRate} previous={p.bounceRate} invertDelta hint="meglio se basso" />
       </div>
 
       {/* Secondary metrics strip */}
@@ -44,15 +44,15 @@ export function OverviewTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
         <div className="card p-5 lg:col-span-2">
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <div className="font-semibold">Sending & engagement</div>
+              <div className="font-semibold">Invii & engagement</div>
               <div className="text-xs muted">
-                Daily volume over the selected period
+                Volume giornaliero nel periodo selezionato
               </div>
             </div>
             <FeedbackButton
               slug={slug}
               target="overview:trend"
-              targetLabel="Sending & engagement trend"
+              targetLabel="Trend invii & engagement"
               compact
             />
           </div>
@@ -65,31 +65,31 @@ export function OverviewTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
             ]}
           />
           <div className="mt-3 flex gap-4 text-xs muted">
-            <Legend color="#244f4f" label="Sent" />
-            <Legend color="#1f9d7a" label="Opens" />
-            <Legend color="#c08a1e" label="Replies" />
+            <Legend color="#244f4f" label="Inviate" />
+            <Legend color="#1f9d7a" label="Aperture" />
+            <Legend color="#c08a1e" label="Risposte" />
           </div>
         </div>
 
         <div className="card p-5">
-          <div className="mb-2 font-semibold">Pipeline generated</div>
+          <div className="mb-2 font-semibold">Pipeline generata</div>
           <div className="text-3xl font-bold accent">{fmtMoney(t.opportunityValue)}</div>
           <div className="text-xs muted">
-            from {fmtInt(t.opportunities)} opportunities
+            da {fmtInt(t.opportunities)} opportunità
           </div>
           <div className="mt-5 flex justify-around">
-            <Donut value={t.openRate} label="Open rate" color="#1f9d7a" />
-            <Donut value={t.replyRate} label="Reply rate" color="#244f4f" />
+            <Donut value={t.openRate} label="Apertura" color="#1f9d7a" />
+            <Donut value={t.replyRate} label="Risposta" color="#244f4f" />
           </div>
         </div>
       </div>
 
       <div className="card p-5">
-        <div className="mb-4 font-semibold">Top campaigns by replies</div>
+        <div className="mb-4 font-semibold">Top campagne per risposte</div>
         {topCampaigns.length ? (
           <BarRows rows={topCampaigns} />
         ) : (
-          <div className="text-sm muted">No campaign data yet.</div>
+          <div className="text-sm muted">Ancora nessun dato campagne.</div>
         )}
       </div>
     </div>

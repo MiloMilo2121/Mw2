@@ -56,42 +56,46 @@ export function FeedbackButton({
         className={`rounded-lg border border-[var(--border)] text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--text)] ${
           compact ? "px-2 py-1 text-xs" : "px-3 py-1.5 text-sm"
         }`}
-        title={`Comment on ${targetLabel}`}
+        title={`Commenta ${targetLabel}`}
       >
-        💬 {compact ? "" : "Comment"}
+        💬 {compact ? "" : "Commenta"}
       </button>
 
       {open && (
         <div className="absolute right-0 z-20 mt-2 w-80 card p-3 shadow-xl">
           <div className="mb-2 text-xs muted">
-            Feedback on <span className="text-[var(--text)]">{targetLabel}</span>
+            Feedback su <span className="text-[var(--text)]">{targetLabel}</span>
           </div>
           <div className="mb-2 flex gap-1">
-            {(["comment", "question", "flag"] as const).map((k) => (
+            {([
+              ["comment", "Commento"],
+              ["question", "Domanda"],
+              ["flag", "Segnala"],
+            ] as const).map(([k, lbl]) => (
               <button
                 key={k}
                 onClick={() => setKind(k)}
-                className={`rounded-md px-2 py-1 text-xs capitalize ${
+                className={`rounded-md px-2 py-1 text-xs ${
                   kind === k
                     ? "accent-bg"
                     : "card-2 muted hover:text-[var(--text)]"
                 }`}
               >
-                {k}
+                {lbl}
               </button>
             ))}
           </div>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Write your note…"
+            placeholder="Scrivi una nota…"
             rows={3}
             className="w-full resize-none rounded-lg card-2 px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
           />
           <input
             value={author}
             onChange={(e) => setAuthor(e.target.value)}
-            placeholder="Your name (optional)"
+            placeholder="Il tuo nome (opzionale)"
             className="mt-2 w-full rounded-lg card-2 px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
           />
           <div className="mt-2 flex justify-end gap-2">
@@ -99,14 +103,14 @@ export function FeedbackButton({
               onClick={() => setOpen(false)}
               className="rounded-lg px-3 py-1.5 text-sm muted hover:text-[var(--text)]"
             >
-              Cancel
+              Annulla
             </button>
             <button
               onClick={submit}
               disabled={sending || !body.trim()}
               className="rounded-lg accent-bg px-3 py-1.5 text-sm font-medium disabled:opacity-50"
             >
-              {done ? "Sent ✓" : sending ? "Sending…" : "Send"}
+              {done ? "Inviato ✓" : sending ? "Invio…" : "Invia"}
             </button>
           </div>
         </div>

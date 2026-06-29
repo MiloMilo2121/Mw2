@@ -26,9 +26,9 @@ type Tab =
   | "report";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "overview", label: "Overview" },
+  { id: "overview", label: "Panoramica" },
   { id: "engagement", label: "Aperture & Click" },
-  { id: "campaigns", label: "Campaigns" },
+  { id: "campaigns", label: "Campagne" },
   { id: "steps", label: "Sequenza" },
   { id: "contacts", label: "Contatti" },
   { id: "deliverability", label: "Deliverability" },
@@ -38,10 +38,10 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 const RANGES = [
-  { label: "7d", days: 7 },
-  { label: "14d", days: 14 },
-  { label: "30d", days: 30 },
-  { label: "90d", days: 90 },
+  { label: "7g", days: 7 },
+  { label: "14g", days: 14 },
+  { label: "30g", days: 30 },
+  { label: "90g", days: 90 },
 ];
 
 export function Shell({ slug }: { slug: string }) {
@@ -90,7 +90,7 @@ export function Shell({ slug }: { slug: string }) {
           <button
             onClick={() => refresh()}
             className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-sm muted hover:text-[var(--text)]"
-            title="Refresh now"
+            title="Aggiorna ora"
           >
             ↻
           </button>
@@ -117,12 +117,12 @@ export function Shell({ slug }: { slug: string }) {
       {/* Body */}
       {error ? (
         <div className="card p-8 text-center">
-          <div className="text-[var(--bad)]">Could not load dashboard data.</div>
+          <div className="text-[var(--bad)]">Impossibile caricare i dati.</div>
           <button
             onClick={() => refresh()}
             className="mt-3 rounded-lg accent-bg px-4 py-2 text-sm font-medium"
           >
-            Retry
+            Riprova
           </button>
         </div>
       ) : !snapshot ? (

@@ -13,7 +13,7 @@ export function ReportTab({ snap, slug }: { snap: DashboardSnapshot; slug: strin
       <div className="mb-6 flex items-start justify-between">
         <div>
           <div className="text-xs uppercase tracking-widest muted">
-            Performance report
+            Report performance
           </div>
           <h2 className="mt-1 text-2xl font-bold">{snap.client.name}</h2>
           <div className="text-sm muted">
@@ -31,37 +31,37 @@ export function ReportTab({ snap, slug }: { snap: DashboardSnapshot; slug: strin
             onClick={() => window.print()}
             className="rounded-lg accent-bg px-3 py-1.5 text-sm font-medium"
           >
-            🖨 Save as PDF
+            🖨 Salva come PDF
           </button>
         </div>
       </div>
 
       <p className="mb-6 max-w-2xl text-[15px] leading-relaxed">
-        Over this period we sent <b>{fmtInt(t.emailsSent)}</b> emails, achieving a{" "}
-        <b>{fmtPct(t.openRate)}</b> open rate and <b>{fmtPct(t.replyRate)}</b> reply
-        rate. This produced <b>{fmtInt(t.replies)}</b> replies and{" "}
-        <b>{fmtInt(t.opportunities)}</b> opportunities worth an estimated{" "}
-        <b>{fmtMoney(t.opportunityValue)}</b> in pipeline. Bounce rate held at{" "}
+        In questo periodo abbiamo inviato <b>{fmtInt(t.emailsSent)}</b> email, con un
+        tasso di apertura del <b>{fmtPct(t.openRate)}</b> e un tasso di risposta del{" "}
+        <b>{fmtPct(t.replyRate)}</b>. Sono arrivate <b>{fmtInt(t.replies)}</b> risposte e{" "}
+        <b>{fmtInt(t.opportunities)}</b> opportunità per un valore stimato di{" "}
+        <b>{fmtMoney(t.opportunityValue)}</b> di pipeline. Il tasso di bounce è rimasto al{" "}
         <b>{fmtPct(t.bounceRate)}</b>.
       </p>
 
       <div className="grid gap-6 md:grid-cols-2">
         <div>
-          <H>Headline metrics</H>
+          <H>Metriche principali</H>
           <dl className="grid grid-cols-2 gap-y-2 text-sm">
-            <Row k="Emails sent" v={fmtInt(t.emailsSent)} />
-            <Row k="Leads contacted" v={fmtInt(t.contacted)} />
-            <Row k="Open rate" v={fmtPct(t.openRate)} />
-            <Row k="Reply rate" v={fmtPct(t.replyRate)} />
-            <Row k="Click rate" v={fmtPct(t.clickRate)} />
-            <Row k="Bounce rate" v={fmtPct(t.bounceRate)} />
-            <Row k="Opportunities" v={fmtInt(t.opportunities)} />
-            <Row k="Pipeline value" v={fmtMoney(t.opportunityValue)} />
+            <Row k="Email inviate" v={fmtInt(t.emailsSent)} />
+            <Row k="Lead contattati" v={fmtInt(t.contacted)} />
+            <Row k="Tasso apertura" v={fmtPct(t.openRate)} />
+            <Row k="Tasso risposta" v={fmtPct(t.replyRate)} />
+            <Row k="Tasso click" v={fmtPct(t.clickRate)} />
+            <Row k="Tasso bounce" v={fmtPct(t.bounceRate)} />
+            <Row k="Opportunità" v={fmtInt(t.opportunities)} />
+            <Row k="Valore pipeline" v={fmtMoney(t.opportunityValue)} />
           </dl>
         </div>
 
         <div>
-          <H>Top campaigns</H>
+          <H>Top campagne</H>
           <ol className="flex flex-col gap-2 text-sm">
             {top.map((c, i) => (
               <li key={c.id} className="flex items-center justify-between">
@@ -69,7 +69,7 @@ export function ReportTab({ snap, slug }: { snap: DashboardSnapshot; slug: strin
                   {i + 1}. {c.name}
                 </span>
                 <span className="shrink-0 muted tabular-nums">
-                  {fmtInt(c.replies)} replies · {fmtPct(c.emailsSent ? c.opens / c.emailsSent : 0)}
+                  {fmtInt(c.replies)} risposte · {fmtPct(c.emailsSent ? c.opens / c.emailsSent : 0)}
                 </span>
               </li>
             ))}
@@ -77,9 +77,9 @@ export function ReportTab({ snap, slug }: { snap: DashboardSnapshot; slug: strin
 
           <H className="mt-6">Deliverability</H>
           <p className="text-sm">
-            {snap.accounts.length} sending accounts ·{" "}
+            {snap.accounts.length} account di invio ·{" "}
             <span style={{ color: atRisk.length ? "var(--bad)" : "var(--good)" }}>
-              {atRisk.length} at risk
+              {atRisk.length} a rischio
             </span>
             .
           </p>
@@ -87,7 +87,7 @@ export function ReportTab({ snap, slug }: { snap: DashboardSnapshot; slug: strin
             <ul className="mt-1 text-sm muted">
               {atRisk.slice(0, 5).map((a) => (
                 <li key={a.email}>
-                  • {a.email} — {a.statusLabel} (health {a.healthScore})
+                  • {a.email} — {a.statusLabel} (salute {a.healthScore})
                 </li>
               ))}
             </ul>
@@ -96,8 +96,8 @@ export function ReportTab({ snap, slug }: { snap: DashboardSnapshot; slug: strin
       </div>
 
       <div className="mt-8 border-t border-[var(--border)] pt-4 text-xs muted">
-        Generated {new Date(snap.generatedAt).toLocaleString()} · Source:{" "}
-        {snap.source === "instantly" ? "Instantly (live)" : "Demo data"}
+        Generato {new Date(snap.generatedAt).toLocaleString("it-IT")} · Fonte:{" "}
+        {snap.source === "instantly" ? "Instantly (live)" : "Dati demo"}
       </div>
     </div>
   );

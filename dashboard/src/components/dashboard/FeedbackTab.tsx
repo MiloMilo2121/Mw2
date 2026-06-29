@@ -24,26 +24,25 @@ export function FeedbackTab({ slug }: { slug: string }) {
     <div className="flex flex-col gap-6">
       <div className="card flex items-center justify-between p-5">
         <div>
-          <div className="font-semibold">Feedback & collaboration</div>
+          <div className="font-semibold">Feedback & collaborazione</div>
           <div className="text-xs muted">
-            Leave notes, questions or flag anything. The agency sees these in real
-            time.
+            Lascia note, domande o segnalazioni. L&apos;agenzia le vede in tempo reale.
           </div>
         </div>
         <FeedbackButton
           slug={slug}
           target="overview"
-          targetLabel="General"
+          targetLabel="Generale"
           onSent={refresh}
         />
       </div>
 
       {isLoading && !items.length ? (
-        <div className="text-sm muted">Loading…</div>
+        <div className="text-sm muted">Carico…</div>
       ) : null}
 
       {open.length > 0 && (
-        <Section title={`Open (${open.length})`}>
+        <Section title={`Aperti (${open.length})`}>
           {open.map((i) => (
             <FeedbackCard
               key={i.id}
@@ -57,7 +56,7 @@ export function FeedbackTab({ slug }: { slug: string }) {
                   onClick={() => toggle(i.id, true)}
                   className="rounded-md card-2 px-2 py-1 text-xs muted hover:text-[var(--good)]"
                 >
-                  Mark resolved
+                  Segna risolto
                 </button>
               }
             />
@@ -66,7 +65,7 @@ export function FeedbackTab({ slug }: { slug: string }) {
       )}
 
       {resolved.length > 0 && (
-        <Section title={`Resolved (${resolved.length})`}>
+        <Section title={`Risolti (${resolved.length})`}>
           {resolved.map((i) => (
             <FeedbackCard
               key={i.id}
@@ -81,7 +80,7 @@ export function FeedbackTab({ slug }: { slug: string }) {
                   onClick={() => toggle(i.id, false)}
                   className="rounded-md card-2 px-2 py-1 text-xs muted hover:text-[var(--text)]"
                 >
-                  Reopen
+                  Riapri
                 </button>
               }
             />
@@ -91,7 +90,7 @@ export function FeedbackTab({ slug }: { slug: string }) {
 
       {!items.length && !isLoading && (
         <div className="card p-8 text-center text-sm muted">
-          No feedback yet. Use the 💬 buttons across the dashboard to start a note.
+          Ancora nessun feedback. Usa i pulsanti 💬 nella dashboard per lasciare una nota.
         </div>
       )}
     </div>
@@ -132,7 +131,7 @@ function FeedbackCard({
           <div>
             <div className="text-sm">
               <span className="font-medium">{author}</span>{" "}
-              <span className="muted">on {title}</span>
+              <span className="muted">su {title}</span>
             </div>
             <div className="mt-1 whitespace-pre-wrap text-sm">{body}</div>
             <div className="mt-1 text-xs muted">{when}</div>

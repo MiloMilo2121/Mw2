@@ -36,19 +36,19 @@ export function DeliverabilityTab({
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-        <Stat label="Sending accounts" value={fmtInt(total)} />
-        <Stat label="Active" value={fmtInt(active)} color="var(--good)" />
-        <Stat label="At risk" value={fmtInt(atRisk)} color={atRisk ? "var(--bad)" : "var(--muted)"} />
-        <Stat label="Avg warmup" value={`${avgWarmup}`} />
-        <Stat label="Avg health" value={`${avgHealth}`} color={healthColor(avgHealth)} />
+        <Stat label="Account invio" value={fmtInt(total)} />
+        <Stat label="Attivi" value={fmtInt(active)} color="var(--good)" />
+        <Stat label="A rischio" value={fmtInt(atRisk)} color={atRisk ? "var(--bad)" : "var(--muted)"} />
+        <Stat label="Warmup medio" value={`${avgWarmup}`} />
+        <Stat label="Salute media" value={`${avgHealth}`} color={healthColor(avgHealth)} />
       </div>
 
       <div className="card overflow-hidden">
         <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
           <div>
-            <div className="font-semibold">Inbox / account health</div>
+            <div className="font-semibold">Salute account / inbox</div>
             <div className="text-xs muted">
-              Sorted by health — weakest first. {Object.entries(providers)
+              Ordinati per salute — peggiori in alto. {Object.entries(providers)
                 .map(([p, n]) => `${n} ${p}`)
                 .join(" · ")}
             </div>
@@ -56,7 +56,7 @@ export function DeliverabilityTab({
           <FeedbackButton
             slug={slug}
             target="deliverability"
-            targetLabel="Deliverability & accounts"
+            targetLabel="Deliverability & account"
             compact
           />
         </div>
@@ -67,10 +67,10 @@ export function DeliverabilityTab({
               <tr className="text-left text-xs uppercase tracking-wide muted">
                 <th className="px-5 py-3 font-medium">Account</th>
                 <th className="px-5 py-3 font-medium">Provider</th>
-                <th className="px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium">Stato</th>
                 <th className="px-5 py-3 font-medium">Warmup</th>
-                <th className="px-5 py-3 text-right font-medium">Daily cap</th>
-                <th className="px-5 py-3 font-medium">Health</th>
+                <th className="px-5 py-3 text-right font-medium">Limite/g</th>
+                <th className="px-5 py-3 font-medium">Salute</th>
               </tr>
             </thead>
             <tbody>
