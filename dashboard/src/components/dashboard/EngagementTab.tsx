@@ -166,7 +166,7 @@ export function EngagementTab({ snap, slug }: { snap: DashboardSnapshot; slug: s
                       )}
                     </td>
                     <td className="px-5 py-3">
-                      {l.verified ? (
+                      {l.quality ? (
                         <span
                           className="inline-block whitespace-nowrap rounded-md px-2 py-0.5 text-xs"
                           style={{
@@ -174,10 +174,10 @@ export function EngagementTab({ snap, slug }: { snap: DashboardSnapshot; slug: s
                             color: l.quality === "good" ? "var(--good)" : "var(--muted)",
                           }}
                         >
-                          {l.quality || "verificato"}{l.result ? ` · ${l.result}` : ""}
+                          {l.quality}{l.result ? ` · ${l.result}` : ""}
                         </span>
                       ) : (
-                        <span className="text-xs muted">non nel file</span>
+                        <span className="text-xs muted">—</span>
                       )}
                     </td>
                     <td className="px-5 py-3 text-right tabular-nums">{fmtInt(l.opens)}</td>
