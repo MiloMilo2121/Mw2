@@ -8,9 +8,10 @@ import { fmtInt } from "@/lib/format";
 
 const FILTERS = [
   { id: "all", label: "Tutti" },
-  { id: "opened", label: "Hanno aperto" },
-  { id: "clicked", label: "Hanno cliccato" },
+  { id: "interested", label: "Interessati" },
   { id: "replied", label: "Hanno risposto" },
+  { id: "clicked", label: "Hanno cliccato" },
+  { id: "opened", label: "Hanno aperto" },
 ];
 
 function fmtDate(iso: string | null): string {
@@ -18,8 +19,34 @@ function fmtDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("it-IT", { day: "numeric", month: "short" });
 }
 
+// Visual call-priority badge, matching the server-side callScore ordering.
+function priorityBadge(l: { interestStatus: number; replies: number; clicks: number; opens: number; phone: string }) {
+  let label: string;
+  let bg: string;
+  let color: string;
+  if (l.interestStatus > 0) {
+    label = "Interessato"; bg = "rgba(31,157,122,.14)"; color = "var(--good)";
+  } else if (l.replies > 0) {
+    label = "Ha risposto"; bg = "rgba(192,138,30,.16)"; color = "var(--warn)";
+  } else if (l.clicks > 0) {
+    label = "Ha cliccato"; bg = "rgba(36,79,79,.12)"; color = "var(--accent-strong)";
+  } else if (l.opens > 1) {
+    label = "Aperture ripetute"; bg = "var(--panel-2)"; color = "var(--muted)";
+  } else {
+    return <span className="muted">—</span>;
+  }
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="rounded-md px-2 py-0.5 text-xs font-medium" style={{ background: bg, color }}>
+        {label}
+      </span>
+      {!l.phone ? <span className="text-[10px] muted" title="Nessun telefono in archivio">no tel</span> : null}
+    </span>
+  );
+}
+
 export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: string }) {
-  const [filter, setFilter] = useState("clicked");
+  const [filter, setFilter] = useState("all");
   const [campaign, setCampaign] = useState("");
   const [q, setQ] = useState("");
   const { data, isLoading } = useLeads(slug, { filter, campaign, q });
@@ -78,6 +105,7 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
           <span className="muted">
             {data ? `${fmtInt(data.shown)} contatti` : "Carico…"}
             {data && data.shown > data.leads.length ? ` (primi ${data.leads.length})` : ""}
+            <span className="accent"> · ordinati per priorità di chiamata</span>
           </span>
           {data?.source === "mock" && <span className="text-xs muted">dati demo</span>}
         </div>
@@ -85,6 +113,7 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
           <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-wide muted">
+                <th className="px-5 py-3 font-medium">Priorità</th>
                 <th className="px-5 py-3 font-medium">Contatto</th>
                 <th className="px-5 py-3 font-medium">Azienda</th>
                 <th className="px-5 py-3 font-medium">Città</th>
@@ -99,19 +128,20 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
             <tbody>
               {isLoading && !data ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-8 text-center muted">
+                  <td colSpan={10} className="px-5 py-8 text-center muted">
                     Carico i contatti…
                   </td>
                 </tr>
               ) : data && data.leads.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-5 py-8 text-center muted">
+                  <td colSpan={10} className="px-5 py-8 text-center muted">
                     Nessun contatto con questo filtro.
                   </td>
                 </tr>
               ) : (
                 data?.leads.map((l) => (
                   <tr key={l.id} className="border-t border-[var(--border)] hover:bg-[var(--panel-2)]">
+                    <td className="px-5 py-3">{priorityBadge(l)}</td>
                     <td className="px-5 py-3">
                       <div className="font-medium" style={{ color: "var(--ink)" }}>
                         {l.firstName} {l.lastName}

@@ -77,7 +77,8 @@ export function EngagementTab({ snap, slug }: { snap: DashboardSnapshot; slug: s
         <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-3 text-sm">
           <span className="muted">
             {data ? `${fmtInt(rows.length)} contatti` : "Carico…"} ·{" "}
-            <span className="accent">{fmtInt(withPhone)} con telefono per richiamarli</span>
+            <span className="accent">{fmtInt(withPhone)} con telefono</span> ·{" "}
+            ordinati per priorità di chiamata
           </span>
           {data?.source === "mock" && <span className="text-xs muted">dati demo</span>}
         </div>

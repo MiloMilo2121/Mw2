@@ -118,8 +118,12 @@ export async function GET(
     );
   }
 
-  // Most engaged first: clicks, then replies, then opens.
-  rows.sort((a, b) => b.clicks - a.clicks || b.replies - a.replies || b.opens - a.opens);
+  // Call priority ("chi chiamare"): rank the people Geriko should phone first.
+  // Interested > replied > clicked > opened; a contact with a phone number is
+  // bubbled above an equally-hot but unreachable one — the top of the list is an
+  // actionable call sheet. Score is attached so the UI can show a priority badge.
+  for (const l of rows) l.callScore = callScore(l);
+  rows.sort((a, b) => (b.callScore ?? 0) - (a.callScore ?? 0) || (b.lastOpen || "").localeCompare(a.lastOpen || ""));
 
   const engaged = {
     opened: leads.filter((l) => l.opens > 0).length,
@@ -133,4 +137,17 @@ export async function GET(
     { source, total: leads.length, shown: rows.length, engaged, enriched, leads: rows.slice(0, 500) },
     { headers: { "Cache-Control": "no-store" } }
   );
+}
+
+// How "callable" a lead is, highest = call first. Tiers (interest, reply, click,
+// open) dominate the score; having a phone number adds a strong boost so reachable
+// leads sit above equally-warm but un-callable ones.
+function callScore(l: Lead): number {
+  let s = 0;
+  if (l.interestStatus > 0) s += 6000 + l.interestStatus * 1000;
+  s += Math.min(l.replies, 5) * 800;
+  s += Math.min(l.clicks, 10) * 120;
+  s += Math.min(l.opens, 30) * 12;
+  if (l.phone) s += 4000;
+  return s;
 }

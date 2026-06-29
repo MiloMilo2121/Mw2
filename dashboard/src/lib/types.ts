@@ -99,6 +99,8 @@ export type Lead = {
   campaignId: string;
   lastContact: string | null;
   lastOpen: string | null;
+  /** Call-priority score computed server-side; higher = phone this person first. */
+  callScore?: number;
 };
 
 export type FeedbackItem = {
