@@ -1,0 +1,357 @@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sim · Stargazer → Enterprise Pipeline</title>
+<meta name="description" content="A live GTM data pipeline that turns Sim's real GitHub stargazers into a ranked, call-ready enterprise account list. Built by Marco Milanello." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --cream:#F4EDE4; --cream-2:#EAE0D2; --paper:#FBF7F1;
+    --ink:#1A1714; --ink-soft:#4A423A; --muted:#8A7E70;
+    --terra:#C4663F; --terra-deep:#A24E2D; --terra-soft:#E8C7B4;
+    --line:rgba(26,23,20,0.12); --line-strong:rgba(26,23,20,0.22);
+    --ent:#A24E2D; --dp:#C4663F; --comm:#8A7E70;
+    --good:#3F7D5A;
+    --disp:"Space Grotesk",system-ui,sans-serif;
+    --body:"Inter",system-ui,sans-serif;
+    --mono:"Space Mono",ui-monospace,monospace;
+    --r:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--cream); color:var(--ink); font-family:var(--body);
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    background-image:radial-gradient(1100px 500px at 88% -8%, rgba(196,102,63,0.07), transparent 60%);
+    background-attachment:fixed;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  a{color:var(--terra-deep);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* top strip */
+  .strip{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+  .strip b{color:var(--ink);font-weight:700}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--terra);margin-right:8px;vertical-align:middle}
+
+  /* hero */
+  header.hero{padding:44px 0 30px}
+  .whatis{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--terra-deep);
+    background:var(--terra-soft);padding:6px 12px;border-radius:999px;margin-bottom:20px}
+  h1{font-family:var(--disp);font-weight:700;font-size:clamp(30px,4.6vw,50px);line-height:1.04;letter-spacing:-0.02em;margin:0 0 16px}
+  h1 .accent{color:var(--terra-deep)}
+  .sub{font-size:17px;color:var(--ink-soft);max-width:680px;margin:0}
+  .sub b{color:var(--ink);font-weight:600}
+
+  /* stat tiles */
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:30px 0 8px}
+  .tile{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 16px}
+  .tile .n{font-family:var(--disp);font-weight:700;font-size:30px;line-height:1;letter-spacing:-0.02em}
+  .tile .n.terra{color:var(--terra-deep)}
+  .tile .l{font-size:12.5px;color:var(--muted);margin-top:8px;letter-spacing:.01em}
+
+  /* engine panel */
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:22px 22px 8px;margin:26px 0}
+  .panel h2{font-family:var(--disp);font-size:15px;letter-spacing:.02em;margin:0 0 4px;text-transform:uppercase}
+  .panel .hint{font-size:13px;color:var(--muted);margin:0 0 18px}
+  .knobs{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+  .knob label{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:8px}
+  .knob label .v{font-family:var(--mono);color:var(--terra-deep)}
+  input[type=range]{width:100%;accent-color:var(--terra);cursor:pointer}
+  .knob .d{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.35}
+
+  /* controls row */
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:22px 0 12px}
+  .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:999px;overflow:hidden}
+  .seg button{background:transparent;border:0;padding:8px 15px;font-family:var(--body);font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+  .seg button[aria-pressed=true]{background:var(--ink);color:var(--cream)}
+  .search{flex:1;min-width:180px;padding:9px 14px;border:1px solid var(--line-strong);border-radius:999px;font-family:var(--body);font-size:13px;background:var(--paper);color:var(--ink)}
+  .count{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+
+  /* table */
+  .tablecard{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--paper)}
+  .scroller{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:720px}
+  th,td{text-align:left;padding:12px 14px;font-size:13.5px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    background:var(--cream-2);position:sticky;top:0;cursor:pointer;white-space:nowrap;user-select:none}
+  th.sorted::after{content:" ↓";color:var(--terra-deep)}
+  tr:last-child td{border-bottom:0}
+  tr:hover td{background:var(--cream)}
+  .who{display:flex;flex-direction:column;gap:2px}
+  .who .nm{font-weight:600}
+  .who .lg{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .co{font-weight:600}
+  .co.none{color:var(--muted);font-weight:400;font-style:italic}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+  .scorecell{font-family:var(--disp);font-weight:700;font-size:16px}
+  .bar{height:6px;border-radius:3px;background:var(--cream-2);margin-top:5px;overflow:hidden;width:66px}
+  .bar > i{display:block;height:100%;background:var(--terra)}
+  .tier{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:999px;font-weight:700}
+  .tier.ent{background:var(--terra-deep);color:#fff}
+  .tier.dp{background:var(--terra-soft);color:var(--terra-deep)}
+  .tier.comm{background:var(--cream-2);color:var(--muted)}
+
+  /* sections */
+  section.block{padding:34px 0;border-top:1px solid var(--line);margin-top:34px}
+  section.block h2{font-family:var(--disp);font-size:22px;letter-spacing:-0.01em;margin:0 0 14px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+  .cols h3{font-family:var(--disp);font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--terra-deep);margin:0 0 10px}
+  ol.week,ul.plain{margin:0;padding-left:18px}
+  ol.week li,ul.plain li{margin-bottom:9px;font-size:14.5px;color:var(--ink-soft)}
+  ol.week li b{color:var(--ink)}
+  .note{font-size:12.5px;color:var(--muted);background:var(--paper);border:1px dashed var(--line-strong);border-radius:var(--r);padding:16px 18px;line-height:1.5}
+  .note b{color:var(--ink-soft)}
+
+  footer{border-top:1px solid var(--line);margin-top:20px;padding:26px 0 50px;font-size:13.5px;color:var(--muted)}
+  footer b{color:var(--ink)}
+  .tag{font-family:var(--mono);font-size:11.5px}
+
+  @media(max-width:820px){
+    .tiles,.knobs{grid-template-columns:repeat(2,1fr)}
+    .cols{grid-template-columns:1fr}
+  }
+</style>
+
+<div class="wrap">
+  <div class="strip">
+    <span><span class="dot"></span>Proof artifact · for <b>Sim</b> (sim.ai)</span>
+    <span>Marco Milanello</span>
+  </div>
+
+  <header class="hero">
+    <div class="whatis">What this is → a working GTM data pipeline, run on your own repo</div>
+    <h1>You have <span class="accent" id="h-stars">28,800</span> stargazers.<br/>Here are the ones your <span class="accent">founding GTM hire</span> should call first.</h1>
+    <p class="sub">I pulled a live sample of <b>Sim's real GitHub stargazers</b>, enriched each from their public profile, and scored them against your ICP — fast-growing technical teams and enterprise platform builders. Move the weights below; the ranking recomputes in your browser. <b>This is the targeting layer the Founding GTM Engineer role is meant to build — running, on your data, today.</b></p>
+  </header>
+
+  <div class="tiles">
+    <div class="tile"><div class="n" id="t-sample">–</div><div class="l">stargazers sampled (live)</div></div>
+    <div class="tile"><div class="n" id="t-enriched">–</div><div class="l">profiles enriched</div></div>
+    <div class="tile"><div class="n terra" id="t-company">–</div><div class="l">with an identifiable employer</div></div>
+    <div class="tile"><div class="n terra" id="t-ent">–</div><div class="l">enterprise / design-partner tier</div></div>
+  </div>
+
+  <div class="panel">
+    <h2>ICP scoring engine</h2>
+    <p class="hint">Weights are yours to set. Every lead is re-scored live from real profile fields — no fixed list, no black box.</p>
+    <div class="knobs">
+      <div class="knob">
+        <label>Employer signal <span class="v" id="v-company">40</span></label>
+        <input type="range" id="w-company" min="0" max="60" value="40" />
+        <div class="d">Has a real company; bonus for AI / platform / enterprise-shaped orgs.</div>
+      </div>
+      <div class="knob">
+        <label>Builder intent <span class="v" id="v-intent">30</span></label>
+        <input type="range" id="w-intent" min="0" max="60" value="30" />
+        <div class="d">Bio/role signals: engineer, founder, AI, agents, automation, platform.</div>
+      </div>
+      <div class="knob">
+        <label>Reach / seniority <span class="v" id="v-reach">18</span></label>
+        <input type="range" id="w-reach" min="0" max="60" value="18" />
+        <div class="d">Follower count as a proxy for influence and seniority.</div>
+      </div>
+      <div class="knob">
+        <label>Activity <span class="v" id="v-active">12</span></label>
+        <input type="range" id="w-active" min="0" max="60" value="12" />
+        <div class="d">Public repos — an active builder, likely to adopt agent infra.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="seg" id="tierseg">
+      <button data-t="all" aria-pressed="true">All</button>
+      <button data-t="ent">Enterprise</button>
+      <button data-t="dp">Design-partner</button>
+      <button data-t="comm">Community</button>
+    </div>
+    <input class="search" id="q" placeholder="Filter by name, company, location…" />
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="tablecard">
+    <div class="scroller">
+      <table>
+        <thead>
+          <tr>
+            <th data-k="rank">#</th>
+            <th data-k="name">Stargazer</th>
+            <th data-k="company">Employer</th>
+            <th data-k="location">Location</th>
+            <th data-k="followers">Reach</th>
+            <th data-k="score" class="sorted">ICP score</th>
+            <th data-k="tier">Tier</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <section class="block">
+    <h2>What this proves</h2>
+    <div class="cols">
+      <div>
+        <p class="sub" style="font-size:15px">This isn't a mockup. It ingests Sim's actual stargazers, resolves each to a person and employer from public data, and turns your open-source distribution into a prioritized pipeline — the first job of a founding GTM engineer. The same pipeline extends to forks, template deployers, and issue-openers from corporate domains.</p>
+      </div>
+      <div>
+        <h3>Week 1, if engaged</h3>
+        <ol class="week">
+          <li><b>Day 1–2:</b> Ingest the full stargazer + fork + issue graph; resolve identity → person → company with an enrichment provider and an LLM fallback. Set the ICP rubric with you.</li>
+          <li><b>Day 3–5:</b> Score and segment; pipe the ranked output into your CRM (Attio/HubSpot); draft ICP-tuned outbound for the top tier. Ship a refreshable pipeline, not a one-off export.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" style="padding-top:22px">
+    <h2 style="font-size:18px">Method &amp; honesty</h2>
+    <p class="note" id="method">…</p>
+  </section>
+
+  <footer>
+    <div class="wrap" style="padding:0">
+      <b>Built by Marco Milanello</b> — costruisco sistemi, non slide.
+      &nbsp;·&nbsp; <a href="https://marcomilanello.it" target="_blank" rel="noopener">marcomilanello.it</a>
+      &nbsp;·&nbsp; <span class="tag">GTM engineering · AI automation · forward-deployed execution</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ---- REAL DATA: sample of Sim (simstudioai/sim) stargazers, enriched from public GitHub profiles ---- */
+const META = __META__;
+const DATA = __DATA__;
+
+/* ---- scoring engine (runs live in the browser) ---- */
+const ENT_TOKENS = ["inc","llc","ltd","corp","gmbh","ai","labs","technologies","technology","systems","software","solutions","group","cloud","data","digital","consulting","agency","studio","ventures","capital","bank","google","amazon","microsoft","meta","apple","nvidia","oracle","salesforce","ibm","intel","cisco","adobe","uber","stripe","shopify","university","research"];
+const INTENT_TOKENS = ["engineer","developer","founder","cofounder","co-founder","cto","ceo","architect","ai","ml","llm","agent","agents","automation","platform","devops","fullstack","full-stack","backend","software","data","gtm","growth","product","lead","head","principal","staff","director"];
+
+function clamp(n){return Math.max(0,Math.min(100,n));}
+function tok(s){return (s||"").toLowerCase();}
+
+function subscores(d){
+  // employer signal 0-100
+  let comp=0;
+  if(d.company){
+    comp=55;
+    const c=tok(d.company);
+    if(ENT_TOKENS.some(t=>c.includes(t))) comp+=30;
+    if(c.length>2) comp+=10;
+  }
+  comp=clamp(comp);
+  // builder intent 0-100 from bio + hireable
+  const b=tok(d.bio)+" "+tok(d.company);
+  let hits=INTENT_TOKENS.filter(t=>b.includes(t)).length;
+  let intent=clamp(hits*22 + (d.hireable?15:0));
+  // reach 0-100 (log-ish scale; 1000+ followers ~ full)
+  const f=d.followers||0;
+  let reach=clamp(Math.round(Math.log10(f+1)/3*100));
+  // activity 0-100 (repos; 60+ ~ full)
+  const r=d.public_repos||0;
+  let active=clamp(Math.round(Math.log10(r+1)/1.8*100));
+  return {comp,intent,reach,active};
+}
+
+function weights(){
+  return {
+    comp:+document.getElementById('w-company').value,
+    intent:+document.getElementById('w-intent').value,
+    reach:+document.getElementById('w-reach').value,
+    active:+document.getElementById('w-active').value,
+  };
+}
+function scoreOf(d,w){
+  const s=d._s;
+  const tot=w.comp+w.intent+w.reach+w.active || 1;
+  return Math.round((s.comp*w.comp + s.intent*w.intent + s.reach*w.reach + s.active*w.active)/tot);
+}
+function tierOf(score,d){
+  if(d.company && score>=62) return "ent";
+  if(score>=45) return "dp";
+  return "comm";
+}
+const TIER_LABEL={ent:"Enterprise",dp:"Design-partner",comm:"Community"};
+
+let sortK="score", filterT="all", query="";
+
+function render(){
+  const w=weights();
+  DATA.forEach(d=>{d._score=scoreOf(d,w); d._tier=tierOf(d._score,d);});
+  let rows=DATA.slice();
+  // sort
+  rows.sort((a,b)=>{
+    if(sortK==="score"||sortK==="rank") return b._score-a._score;
+    if(sortK==="followers") return (b.followers||0)-(a.followers||0);
+    if(sortK==="company") return tok(a.company).localeCompare(tok(b.company));
+    if(sortK==="name") return tok(a.name||a.login).localeCompare(tok(b.name||b.login));
+    if(sortK==="location") return tok(a.location).localeCompare(tok(b.location));
+    if(sortK==="tier"){const o={ent:0,dp:1,comm:2};return o[a._tier]-o[b._tier];}
+    return 0;
+  });
+  const q=query.trim().toLowerCase();
+  const view=rows.filter(d=>{
+    if(filterT!=="all" && d._tier!==filterT) return false;
+    if(q){const hay=(d.name+" "+d.login+" "+(d.company||"")+" "+(d.location||"")).toLowerCase();return hay.includes(q);}
+    return true;
+  });
+  const tb=document.getElementById('rows');
+  tb.innerHTML="";
+  view.forEach((d,i)=>{
+    const tr=document.createElement('tr');
+    const co = d.company ? `<span class="co">${esc(d.company)}</span>` : `<span class="co none">— not listed —</span>`;
+    tr.innerHTML=`
+      <td class="meta">${i+1}</td>
+      <td><div class="who"><span class="nm">${esc(d.name||d.login)}</span>
+          <a class="lg" href="https://github.com/${esc(d.login)}" target="_blank" rel="noopener">@${esc(d.login)}</a></div></td>
+      <td>${co}</td>
+      <td class="meta">${esc(d.location||"—")}</td>
+      <td class="meta">${(d.followers||0).toLocaleString()}</td>
+      <td><span class="scorecell">${d._score}</span><div class="bar"><i style="width:${d._score}%"></i></div></td>
+      <td><span class="tier ${d._tier}">${TIER_LABEL[d._tier]}</span></td>`;
+    tb.appendChild(tr);
+  });
+  document.getElementById('count').textContent = `${view.length} of ${DATA.length} shown`;
+  // tiles
+  const ent=DATA.filter(d=>d._tier==="ent"||d._tier==="dp").length;
+  const comp=DATA.filter(d=>d.company).length;
+  document.getElementById('t-sample').textContent=META.sampled;
+  document.getElementById('t-enriched').textContent=DATA.length;
+  document.getElementById('t-company').textContent=comp;
+  document.getElementById('t-ent').textContent=ent;
+}
+function esc(s){return (s==null?"":(""+s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* wire up */
+['w-company','w-intent','w-reach','w-active'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',e=>{
+    const map={'w-company':'v-company','w-intent':'v-intent','w-reach':'v-reach','w-active':'v-active'};
+    document.getElementById(map[id]).textContent=e.target.value;
+    render();
+  });
+});
+document.getElementById('tierseg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  filterT=b.dataset.t;
+  [...e.currentTarget.children].forEach(x=>x.setAttribute('aria-pressed', x===b));
+  render();
+});
+document.getElementById('q').addEventListener('input',e=>{query=e.target.value;render();});
+document.querySelectorAll('th[data-k]').forEach(th=>{
+  th.addEventListener('click',()=>{
+    sortK=th.dataset.k;
+    document.querySelectorAll('th').forEach(x=>x.classList.remove('sorted'));
+    th.classList.add('sorted');
+    render();
+  });
+});
+
+/* precompute static subscores + init */
+DATA.forEach(d=>{d._s=subscores(d);});
+document.getElementById('h-stars').textContent=META.totalStars;
+document.getElementById('method').innerHTML=META.method;
+render();
+</script>
