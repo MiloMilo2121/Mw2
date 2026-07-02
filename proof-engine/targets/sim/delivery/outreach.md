@@ -2,7 +2,7 @@
 
 **Primary target:** Emir Karabeg — Co-Founder & CEO
 **Secondary / technical validator:** Waleed Latif — Co-Founder & CTO
-**Hook asset:** live artifact → `<ARTIFACT_URL>` (one-pager → `<ONEPAGER_URL>`)
+**Hook asset:** live artifact → <https://raw.githack.com/MiloMilo2121/Mw2/claude/proof-engine-build-spec-c2ful2/proof-engine/targets/sim/artifact/index.html> (one-pager → <https://raw.githack.com/MiloMilo2121/Mw2/claude/proof-engine-build-spec-c2ful2/proof-engine/targets/sim/delivery/one-pager/index.html>)
 
 > ⚠️ Verify Emir's / Waleed's LinkedIn handles before sending (flagged in `data_gaps`).
 > Timing: AI Engineer World's Fair, Jun 29–Jul 2 2026, Moscone West — offer to meet in person.
@@ -15,7 +15,7 @@ Emir — you're hiring a Founding GTM Engineer to build Sim's go-to-market data 
 
 I pulled a live sample of Sim's GitHub stargazers, enriched each from their public profile, and scored them against your ICP — a ranked, call-ready list of the enterprise accounts already watching the repo. It runs in the browser; move the weights and the ranking recomputes.
 
-→ `<ARTIFACT_URL>`
+→ <https://raw.githack.com/MiloMilo2121/Mw2/claude/proof-engine-build-spec-c2ful2/proof-engine/targets/sim/artifact/index.html>
 
 I do GTM strategy + AI + engineering as one job. If it's useful, I'd rather show than pitch — 15 min at the World's Fair?
 
@@ -31,7 +31,7 @@ You're hiring your first Founding GTM Engineer to architect Sim's GTM and RevOps
 
 I took a live sample of Sim's real GitHub stargazers, enriched each one from their public profile (employer, role, reach), and scored them against your ICP — fast-growing technical teams and enterprise platform builders. The result is a ranked, call-ready account list: the stargazers already watching Sim who are worth a first conversation. It runs client-side — you set the scoring weights and the ranking updates instantly:
 
-→ `<ARTIFACT_URL>`
+→ <https://raw.githack.com/MiloMilo2121/Mw2/claude/proof-engine-build-spec-c2ful2/proof-engine/targets/sim/artifact/index.html>
 
 This is just the entry point. The same pipeline extends to forks, template deployers, and issue-openers from corporate domains, and pipes straight into a CRM with ICP-tuned outbound on top — a refreshable pipeline, not a one-off export. That's roughly what week one would look like if we worked together.
 

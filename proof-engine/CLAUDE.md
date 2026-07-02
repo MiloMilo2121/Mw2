@@ -38,5 +38,10 @@ domain → /research → dossier.json → /diagnose → diagnosis.md → /build 
 - AI dentro artefatti agentici: Anthropic API lato artefatto. MAI API key hardcoded.
 
 ## Stato
-Target completati: [aggiorna qui dopo ogni deliver]
-- (nessuno ancora — scaffold creato, in attesa Checkpoint #1: dominio pilota)
+Target completati:
+- **Sim (sim.ai)** — PILOTA ✅ end-to-end. Wedge: stargazer→enterprise pipeline.
+  - Artefatto (live): https://raw.githack.com/MiloMilo2121/Mw2/claude/proof-engine-build-spec-c2ful2/proof-engine/targets/sim/artifact/index.html
+  - One-pager (live): https://raw.githack.com/MiloMilo2121/Mw2/claude/proof-engine-build-spec-c2ful2/proof-engine/targets/sim/delivery/one-pager/index.html
+  - Dati reali: 100 stargazer campionati, 29 con employer, 10 enterprise + 15 design-partner.
+  - Hosting attuale = raw.githack.com (zero-infra, dal repo). Per outreach definitivo → deploy su Vercel sotto dominio Marco (serve token/login: non disponibile in questo ambiente). File pronti in artifact/ e delivery/one-pager/.
+  - TODO umano pre-invio: verificare handle LinkedIn di Emir/Waleed; confermare che il ruolo Founding GTM sia ancora aperto.
