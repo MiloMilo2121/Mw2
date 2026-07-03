@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClient, listClients } from "@/lib/clients";
-import { getAutomations, runAutomation } from "@/lib/automations";
+import { getAutomations, runAutomation, runSuppression } from "@/lib/automations";
+import { getScopedCampaignIds } from "@/lib/instantly";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -21,12 +22,12 @@ export async function GET(req: Request) {
   const summary: Record<string, unknown> = {};
   const clients = await listClients();
   for (const c of clients) {
-    const automations = getAutomations(c.slug);
-    if (!automations.length) continue;
     const client = await getClient(c.slug);
     if (!client?.instantlyApiKey) continue;
     const out: Record<string, unknown> = {};
-    for (const a of automations) {
+
+    // 1. Lead-move automations (Sassi → Carretta, etc.)
+    for (const a of getAutomations(c.slug)) {
       try {
         const report = await runAutomation(client.instantlyApiKey, a, false); // LIVE
         out[a.id] = {
@@ -38,7 +39,22 @@ export async function GET(req: Request) {
         out[a.id] = { error: (err as Error).message };
       }
     }
-    summary[c.slug] = out;
+
+    // 2. Auto-suppression: blocklist clear opt-outs from the replies.
+    try {
+      const scoped = await getScopedCampaignIds(client.instantlyApiKey, {
+        accountKeywords: client.campaignAccountMatch,
+        nameKeywords: client.campaignMatch,
+      });
+      if (scoped && scoped.size) {
+        const sup = await runSuppression(client.instantlyApiKey, [...scoped], false); // LIVE
+        out["suppression"] = { blocked: sup.blocked.length, candidates: sup.candidates.length, errors: sup.errors };
+      }
+    } catch (err) {
+      out["suppression"] = { error: (err as Error).message };
+    }
+
+    if (Object.keys(out).length) summary[c.slug] = out;
   }
   return NextResponse.json({ ranAt: new Date().toISOString(), summary });
 }

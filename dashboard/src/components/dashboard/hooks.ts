@@ -95,6 +95,35 @@ export function useAutomations(slug: string) {
   return { automations: data?.automations ?? [], isLoading };
 }
 
+import type { ReplyCategory } from "@/lib/replies";
+
+export type ReplyItem = {
+  id: string;
+  ts: string;
+  from: string;
+  agency: string;
+  subject: string;
+  snippet: string;
+  category: ReplyCategory;
+  autoSuppress: boolean;
+};
+
+export type RepliesResponse = {
+  source: "instantly" | "mock";
+  total: number;
+  counts: Partial<Record<ReplyCategory, number>>;
+  items: ReplyItem[];
+};
+
+export function useReplies(slug: string) {
+  const { data, isLoading, error } = useSWR<RepliesResponse>(
+    `/api/c/${slug}/replies`,
+    fetcher,
+    { refreshInterval: 60_000, keepPreviousData: true }
+  );
+  return { data, isLoading, error };
+}
+
 export async function postFeedback(
   slug: string,
   payload: {

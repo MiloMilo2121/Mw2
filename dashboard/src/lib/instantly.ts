@@ -546,4 +546,75 @@ export async function addLeadsToCampaign(
   return { ok: errors === 0, added, skipped, errors };
 }
 
+/** A raw email/message object from the Instantly unibox (`/emails`). */
+export type RawEmail = Record<string, unknown>;
+
+/**
+ * Fetch emails for a campaign from the Instantly unibox. `ue_type === 2` marks an
+ * inbound reply from the prospect (1 = a message we sent). Paginated like leads.
+ */
+export async function fetchEmails(
+  apiKey: string,
+  opts: { campaignId?: string; maxEmails?: number } = {}
+): Promise<RawEmail[]> {
+  const { campaignId, maxEmails = 1000 } = opts;
+  const out: RawEmail[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < Math.ceil(maxEmails / 100); page++) {
+    const data = await api<{ items?: RawEmail[]; next_starting_after?: string }>(
+      apiKey,
+      "/emails",
+      { limit: 100, campaign_id: campaignId, starting_after: cursor }
+    );
+    const items = data.items ?? [];
+    out.push(...items);
+    if (!data.next_starting_after || items.length === 0 || out.length >= maxEmails) break;
+    cursor = data.next_starting_after;
+  }
+  return out;
+}
+
+// Instantly's blocklist create endpoint isn't publicly documented under one stable
+// path; these are tried in order until one accepts the write. The first success is
+// cached for the process so later calls skip the probing.
+const BLOCKLIST_PATHS = ["/leads/blocklist", "/block-lists", "/block-list-entries", "/blocklist"];
+let blocklistPath: string | null = null;
+
+/**
+ * Add an email (or domain) to the Instantly blocklist so no campaign can contact
+ * it again — used to honour opt-outs. `bl_value` is the field Instantly expects.
+ */
+export async function addToBlocklist(
+  apiKey: string,
+  value: string
+): Promise<{ ok: boolean; path?: string; status?: number }> {
+  const paths = blocklistPath ? [blocklistPath] : BLOCKLIST_PATHS;
+  for (const path of paths) {
+    try {
+      const res = await fetch(BASE_URL + path, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ bl_value: value }),
+        cache: "no-store",
+      });
+      // 2xx = created; 409/422 with an "already exists" style body also means the
+      // value is effectively blocked — treat as success on the working path.
+      if (res.ok) {
+        blocklistPath = path;
+        return { ok: true, path, status: res.status };
+      }
+      if (res.status === 409 || res.status === 422) {
+        blocklistPath = path;
+        const body = await res.text().catch(() => "");
+        if (/exist|already|duplicate/i.test(body)) return { ok: true, path, status: res.status };
+      }
+      // 404 → wrong path, try the next candidate. Other errors on a known-good path stop.
+      if (res.status !== 404 && blocklistPath) return { ok: false, path, status: res.status };
+    } catch {
+      // network hiccup — try next candidate
+    }
+  }
+  return { ok: false };
+}
+
 export { InstantlyError };
