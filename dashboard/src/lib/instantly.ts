@@ -574,10 +574,10 @@ export async function fetchEmails(
   return out;
 }
 
-// Instantly's blocklist create endpoint isn't publicly documented under one stable
-// path; these are tried in order until one accepts the write. The first success is
-// cached for the process so later calls skip the probing.
-const BLOCKLIST_PATHS = ["/leads/blocklist", "/block-lists", "/block-list-entries", "/blocklist"];
+// Instantly V2 blocklist create endpoint (confirmed against the API + docs). The
+// alternates are kept only as a fallback in case the path changes; the first
+// success is cached for the process so later calls skip the probing.
+const BLOCKLIST_PATHS = ["/block-lists-entries", "/block-list-entries", "/blocklist"];
 let blocklistPath: string | null = null;
 
 /**
