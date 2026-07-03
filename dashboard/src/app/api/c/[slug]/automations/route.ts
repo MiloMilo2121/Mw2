@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getClient } from "@/lib/clients";
-import { getAutomation, getAutomations, runAutomation } from "@/lib/automations";
+import { getAutomation, getAutomations, runAutomation, runSuppression } from "@/lib/automations";
+import { getScopedCampaignIds } from "@/lib/instantly";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -23,7 +24,23 @@ export async function GET(
     const report = await runAutomation(client.instantlyApiKey, a, true); // dry-run
     automations.push({ id: a.id, name: a.name, description: a.description, minDays: a.minDays, ...report });
   }
-  return NextResponse.json({ automations }, { headers: { "Cache-Control": "no-store" } });
+
+  // Dry-run of the auto-suppression (who WOULD be blocklisted) — writes nothing.
+  let suppression: { candidates: string[] } | undefined;
+  try {
+    const scoped = await getScopedCampaignIds(client.instantlyApiKey, {
+      accountKeywords: client.campaignAccountMatch,
+      nameKeywords: client.campaignMatch,
+    });
+    if (scoped && scoped.size) {
+      const sup = await runSuppression(client.instantlyApiKey, [...scoped], true);
+      suppression = { candidates: sup.candidates };
+    }
+  } catch {
+    // ignore — suppression preview is best-effort
+  }
+
+  return NextResponse.json({ automations, suppression }, { headers: { "Cache-Control": "no-store" } });
 }
 
 // POST → LIVE execution (actually adds leads). Protected by CRON_SECRET so the

@@ -8,7 +8,14 @@
 // Runs in dry-run by default (lists who WOULD be added, writes nothing).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { addLeadsToCampaign, fetchRawCampaignLeads } from "./instantly";
+import {
+  addLeadsToCampaign,
+  fetchRawCampaignLeads,
+  fetchEmails,
+  addToBlocklist,
+  type RawEmail,
+} from "./instantly";
+import { categorizeReply, AUTO_SUPPRESS } from "./replies";
 
 type Mapping = { sourceId: string; sourceName: string; targetId: string; targetName: string };
 export type Automation = {
@@ -146,4 +153,62 @@ export async function runAutomation(
     results,
     totalEligible: results.reduce((s, r) => s + r.eligible.length, 0),
   };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Auto-suppression: read inbound replies, and for the clear-opt-out ones add the
+// sender to the Instantly blocklist so no campaign contacts them again. Only the
+// AUTO_SUPPRESS categories are acted on — everything else is left for review.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function emailBodyText(e: RawEmail): string {
+  const b = e.body as unknown;
+  if (typeof b === "string") return b;
+  if (b && typeof b === "object") {
+    const o = b as { text?: string; html?: string };
+    return (o.text || o.html || "")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+  return "";
+}
+
+export async function runSuppression(
+  apiKey: string,
+  campaignIds: string[],
+  dryRun = false
+): Promise<{ dryRun: boolean; candidates: string[]; blocked: string[]; errors: number }> {
+  const perCampaign = await Promise.all(
+    campaignIds.map((id) =>
+      fetchEmails(apiKey, { campaignId: id, maxEmails: 500 }).catch(() => [] as RawEmail[])
+    )
+  );
+  const replies = perCampaign.flat().filter((e) => Number(e.ue_type) === 2);
+
+  // Unique sender emails whose reply is a clear opt-out.
+  const candidates = new Set<string>();
+  for (const e of replies) {
+    const from = String(e.from_address_email ?? "").toLowerCase();
+    if (!from) continue;
+    const category = categorizeReply({
+      from,
+      subject: String(e.subject ?? ""),
+      body: emailBodyText(e),
+    });
+    if (AUTO_SUPPRESS.includes(category)) candidates.add(from);
+  }
+
+  const list = [...candidates];
+  if (dryRun) return { dryRun: true, candidates: list, blocked: [], errors: 0 };
+
+  const blocked: string[] = [];
+  let errors = 0;
+  for (const email of list) {
+    const res = await addToBlocklist(apiKey, email);
+    if (res.ok) blocked.push(email);
+    else errors++;
+  }
+  return { dryRun: false, candidates: list, blocked, errors };
 }
