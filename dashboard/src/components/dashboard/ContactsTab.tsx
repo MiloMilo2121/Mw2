@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { DashboardSnapshot } from "@/lib/types";
 import { useLeads } from "./hooks";
 import { FeedbackButton } from "./FeedbackButton";
+import { LeadDetail } from "./LeadDetail";
 import { fmtInt } from "@/lib/format";
 
 const FILTERS = [
@@ -49,6 +50,7 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
   const [filter, setFilter] = useState("all");
   const [campaign, setCampaign] = useState("");
   const [q, setQ] = useState("");
+  const [openEmail, setOpenEmail] = useState<string | null>(null);
   const { data, isLoading } = useLeads(slug, { filter, campaign, q });
 
   const campName = (id: string) =>
@@ -140,7 +142,11 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
                 </tr>
               ) : (
                 data?.leads.map((l) => (
-                  <tr key={l.id} className="border-t border-[var(--border)] hover:bg-[var(--panel-2)]">
+                  <tr
+                    key={l.id}
+                    onClick={() => setOpenEmail(l.email)}
+                    className="cursor-pointer border-t border-[var(--border)] hover:bg-[var(--panel-2)]"
+                  >
                     <td className="px-5 py-3">{priorityBadge(l)}</td>
                     <td className="px-5 py-3">
                       <div className="font-medium" style={{ color: "var(--ink)" }}>
@@ -150,12 +156,12 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
                       <div className="flex items-center gap-2 text-xs muted">
                         <span>{l.email}</span>
                         {l.linkedin ? (
-                          <a href={l.linkedin} target="_blank" rel="noreferrer" className="accent" title="LinkedIn">
+                          <a href={l.linkedin} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="accent" title="LinkedIn">
                             in
                           </a>
                         ) : null}
                         {l.website ? (
-                          <a href={l.website} target="_blank" rel="noreferrer" className="accent" title="Sito">
+                          <a href={l.website} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="accent" title="Sito">
                             ↗
                           </a>
                         ) : null}
@@ -165,7 +171,7 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
                     <td className="px-5 py-3 muted">{l.city || "—"}</td>
                     <td className="px-5 py-3 whitespace-nowrap">
                       {l.phone ? (
-                        <a href={`tel:${l.phone.replace(/\s/g, "")}`} className="font-medium accent">
+                        <a href={`tel:${l.phone.replace(/\s/g, "")}`} onClick={(e) => e.stopPropagation()} className="font-medium accent">
                           {l.phone}
                         </a>
                       ) : (
@@ -194,6 +200,8 @@ export function ContactsTab({ snap, slug }: { snap: DashboardSnapshot; slug: str
           </table>
         </div>
       </div>
+
+      {openEmail && <LeadDetail slug={slug} email={openEmail} onClose={() => setOpenEmail(null)} />}
     </div>
   );
 }

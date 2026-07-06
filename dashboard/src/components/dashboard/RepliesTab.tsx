@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useReplies } from "./hooks";
 import { FeedbackButton } from "./FeedbackButton";
+import { LeadDetail } from "./LeadDetail";
 import { fmtInt, fmtDateTime } from "@/lib/format";
 import { CATEGORY_LABEL, type ReplyCategory } from "@/lib/replies";
 
@@ -29,6 +30,7 @@ const FILTERS: { id: string; label: string }[] = [
 export function RepliesTab({ slug }: { slug: string }) {
   const { data, isLoading } = useReplies(slug);
   const [filter, setFilter] = useState("all");
+  const [openEmail, setOpenEmail] = useState<string | null>(null);
 
   const items = data?.items ?? [];
   const rows = filter === "all" ? items : items.filter((i) => i.category === filter);
@@ -75,7 +77,11 @@ export function RepliesTab({ slug }: { slug: string }) {
           {rows.map((r) => {
             const st = STYLE[r.category];
             return (
-              <div key={r.id} className="card p-4">
+              <div
+                key={r.id}
+                onClick={() => setOpenEmail(r.from)}
+                className="card cursor-pointer p-4 hover:bg-[var(--panel-2)]"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -109,6 +115,8 @@ export function RepliesTab({ slug }: { slug: string }) {
           })}
         </div>
       )}
+
+      {openEmail && <LeadDetail slug={slug} email={openEmail} onClose={() => setOpenEmail(null)} />}
     </div>
   );
 }

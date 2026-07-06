@@ -574,6 +574,37 @@ export async function fetchEmails(
   return out;
 }
 
+/** Fetch a single lead by exact email (search returns the best match first). */
+export async function fetchLead(apiKey: string, email: string): Promise<RawLead | null> {
+  const res = await fetch(BASE_URL + "/leads/list", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ search: email, limit: 5 }),
+    cache: "no-store",
+  });
+  if (!res.ok) throw new InstantlyError(`/leads/list ${res.status}`, res.status);
+  const data = (await res.json()) as { items?: RawLead[] };
+  const items = data.items ?? [];
+  const wanted = email.toLowerCase();
+  return items.find((l) => String(l.email ?? "").toLowerCase() === wanted) ?? items[0] ?? null;
+}
+
+/** One step of a campaign sequence with its A/B variant subjects (the "approach"). */
+export type SequenceStep = { step: number; variants: { variant: number; subject: string }[] };
+
+/** Fetch a campaign's email sequence (subjects per step + variant) from the definition. */
+export async function fetchCampaignSequence(apiKey: string, campaignId: string): Promise<SequenceStep[]> {
+  const c = await api<{ sequences?: { steps?: { variants?: { subject?: string }[] }[] }[] }>(
+    apiKey,
+    `/campaigns/${campaignId}`
+  );
+  const steps = c.sequences?.[0]?.steps ?? [];
+  return steps.map((st, i) => ({
+    step: i,
+    variants: (st.variants ?? []).map((v, vi) => ({ variant: vi, subject: str(v.subject) })),
+  }));
+}
+
 // Instantly V2 blocklist create endpoint (confirmed against the API + docs). The
 // alternates are kept only as a fallback in case the path changes; the first
 // success is cached for the process so later calls skip the probing.

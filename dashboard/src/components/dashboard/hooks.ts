@@ -124,6 +124,36 @@ export function useReplies(slug: string) {
   return { data, isLoading, error };
 }
 
+export type LeadDetailResponse = {
+  source: string;
+  profile: {
+    firstName: string;
+    lastName: string;
+    company: string;
+    role: string;
+    city: string;
+    phone: string;
+    website: string;
+    email: string;
+    interestStatus: number;
+    interestLabel: string;
+  };
+  counts: { opens: number; clicks: number; replies: number };
+  sequence: { index: number; subject: string; sent: boolean }[];
+  opened: { index: number; subject: string } | null;
+  clicked: { index: number; subject: string } | null;
+  reply: { ts: string; text: string } | null;
+};
+
+export function useLeadDetail(slug: string, email: string | null) {
+  const { data, isLoading, error } = useSWR<LeadDetailResponse>(
+    email ? `/api/c/${slug}/lead?email=${encodeURIComponent(email)}` : null,
+    fetcher,
+    { keepPreviousData: false }
+  );
+  return { data, isLoading, error };
+}
+
 export async function postFeedback(
   slug: string,
   payload: {

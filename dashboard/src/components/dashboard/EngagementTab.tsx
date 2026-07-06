@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { DashboardSnapshot } from "@/lib/types";
 import { useLeads } from "./hooks";
 import { FeedbackButton } from "./FeedbackButton";
+import { LeadDetail } from "./LeadDetail";
 import { fmtInt } from "@/lib/format";
 
 // "Aperture & Click": engaged leads (opened / clicked), enriched with the verified
@@ -33,6 +34,7 @@ export function EngagementTab({ snap, slug }: { snap: DashboardSnapshot; slug: s
   const [filter, setFilter] = useState("opened");
   const [campaign, setCampaign] = useState("");
   const [q, setQ] = useState("");
+  const [openEmail, setOpenEmail] = useState<string | null>(null);
   const { data, isLoading } = useLeads(slug, { filter, campaign, q });
 
   // For the "all engaged" view, drop the un-engaged rows the API may return.
@@ -115,7 +117,11 @@ export function EngagementTab({ snap, slug }: { snap: DashboardSnapshot; slug: s
                 <tr><td colSpan={8} className="px-5 py-8 text-center muted">Nessun contatto con questo filtro.</td></tr>
               ) : (
                 rows.map((l) => (
-                  <tr key={l.id} className="border-t border-[var(--border)] hover:bg-[var(--panel-2)]">
+                  <tr
+                    key={l.id}
+                    onClick={() => setOpenEmail(l.email)}
+                    className="cursor-pointer border-t border-[var(--border)] hover:bg-[var(--panel-2)]"
+                  >
                     <td className="px-5 py-3">
                       <div className="font-medium" style={{ color: "var(--ink)" }}>
                         {l.firstName} {l.lastName}
@@ -130,6 +136,7 @@ export function EngagementTab({ snap, slug }: { snap: DashboardSnapshot; slug: s
                           href={siteHref(l.website)}
                           target="_blank"
                           rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
                           className="text-xs accent hover:underline"
                         >
                           {siteLabel(l.website)} ↗
@@ -139,7 +146,7 @@ export function EngagementTab({ snap, slug }: { snap: DashboardSnapshot; slug: s
                     <td className="px-5 py-3 muted">{l.city || "—"}</td>
                     <td className="px-5 py-3 whitespace-nowrap">
                       {l.phone ? (
-                        <a href={`tel:${l.phone.replace(/\s/g, "")}`} className="font-medium accent">
+                        <a href={`tel:${l.phone.replace(/\s/g, "")}`} onClick={(e) => e.stopPropagation()} className="font-medium accent">
                           {l.phone}
                         </a>
                       ) : (
@@ -194,6 +201,8 @@ export function EngagementTab({ snap, slug }: { snap: DashboardSnapshot; slug: s
           </table>
         </div>
       </div>
+
+      {openEmail && <LeadDetail slug={slug} email={openEmail} onClose={() => setOpenEmail(null)} />}
     </div>
   );
 }
