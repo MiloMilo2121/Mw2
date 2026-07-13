@@ -11,6 +11,7 @@
     "validate:instantly": "node scripts/validate-instantly.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "@supabase/supabase-js": "^2.45.4",
     "next": "^15.5.19",
     "react": "19.0.0",
