@@ -9,6 +9,7 @@ import { DeliverabilityTab } from "./DeliverabilityTab";
 import { ContactsTab } from "./ContactsTab";
 import { EngagementTab } from "./EngagementTab";
 import { RepliesTab } from "./RepliesTab";
+import { AgentTab } from "./AgentTab";
 import { AutomationsTab } from "./AutomationsTab";
 import { FeedbackTab } from "./FeedbackTab";
 import { ReportTab } from "./ReportTab";
@@ -22,6 +23,7 @@ type Tab =
   | "steps"
   | "contacts"
   | "replies"
+  | "agent"
   | "deliverability"
   | "automations"
   | "feedback"
@@ -34,6 +36,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "steps", label: "Sequenza" },
   { id: "contacts", label: "Contatti" },
   { id: "replies", label: "Risposte" },
+  { id: "agent", label: "Agent" },
   { id: "deliverability", label: "Deliverability" },
   { id: "automations", label: "Automazioni" },
   { id: "feedback", label: "Feedback" },
@@ -138,6 +141,7 @@ export function Shell({ slug }: { slug: string }) {
           {tab === "steps" && <StepsTab snap={snapshot} slug={slug} />}
           {tab === "contacts" && <ContactsTab snap={snapshot} slug={slug} />}
           {tab === "replies" && <RepliesTab slug={slug} />}
+          {tab === "agent" && <AgentTab slug={slug} />}
           {tab === "deliverability" && <DeliverabilityTab snap={snapshot} slug={slug} />}
           {tab === "automations" && <AutomationsTab slug={slug} />}
           {tab === "feedback" && <FeedbackTab slug={slug} />}

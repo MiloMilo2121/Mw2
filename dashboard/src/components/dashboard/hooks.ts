@@ -124,6 +124,25 @@ export function useReplies(slug: string) {
   return { data, isLoading, error };
 }
 
+import type { Suggestion } from "@/lib/optimizer";
+import type { DraftResult } from "@/lib/agent";
+
+export type AgentResponse = {
+  source: "instantly" | "mock";
+  suggestions: Suggestion[];
+  drafts: DraftResult[];
+  note?: string;
+};
+
+export function useAgent(slug: string) {
+  const { data, isLoading, error } = useSWR<AgentResponse>(
+    `/api/c/${slug}/agent`,
+    fetcher,
+    { refreshInterval: 120_000, keepPreviousData: true }
+  );
+  return { data, isLoading, error };
+}
+
 export type LeadDetailResponse = {
   source: string;
   profile: {

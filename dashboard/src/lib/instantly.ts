@@ -648,4 +648,41 @@ export async function addToBlocklist(
   return { ok: false };
 }
 
+/**
+ * Whether an email (or its domain) is already in the Instantly blocklist.
+ * Best-effort READ (GET with `?search=`). On error it returns false (fails open —
+ * the primary opt-out guardrail is `categorizeReply`). Used to skip drafting or
+ * sending to a suppressed contact.
+ */
+export async function isBlocklisted(apiKey: string, value: string): Promise<boolean> {
+  const v = value.trim().toLowerCase();
+  if (!v) return false;
+  const domain = v.includes("@") ? v.split("@")[1] ?? "" : v;
+  const paths = blocklistPath ? [blocklistPath] : BLOCKLIST_PATHS;
+  for (const path of paths) {
+    try {
+      const url = new URL(BASE_URL + path);
+      url.searchParams.set("search", v);
+      url.searchParams.set("limit", "20");
+      const res = await fetch(url.toString(), {
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        cache: "no-store",
+      });
+      if (res.status === 404) continue; // wrong path candidate — try the next
+      if (!res.ok) return false;
+      blocklistPath = path;
+      const data = (await res.json().catch(() => ({}))) as {
+        items?: Array<Record<string, unknown>>;
+      };
+      return (data.items ?? []).some((it) => {
+        const bl = String(it.bl_value ?? it.value ?? "").trim().toLowerCase();
+        return bl === v || (!!domain && bl === domain);
+      });
+    } catch {
+      // network hiccup — try next candidate
+    }
+  }
+  return false;
+}
+
 export { InstantlyError };
