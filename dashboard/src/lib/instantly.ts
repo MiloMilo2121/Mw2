@@ -311,10 +311,12 @@ function normAccount(raw: RawAccount): AccountHealth {
     0,
     Math.min(100, Math.round(35 + warmupScore * 0.65 - statusPenalty))
   );
+  const statusMessage = str(raw.status_message ?? raw.status_message_readable) || undefined;
   return {
     email,
     status,
     statusLabel: accountStatusLabel(status),
+    statusMessage,
     warmupStatus: num(raw.warmup_status),
     warmupScore,
     dailyLimit,
