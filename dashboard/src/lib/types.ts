@@ -65,6 +65,8 @@ export type AccountHealth = {
   email: string;
   status: number; // 1 active, 2 paused, -1/-2/-3 error states
   statusLabel: string;
+  /** Raw provider status message when present (e.g. SMTP "550 …") — for alerts. */
+  statusMessage?: string;
   warmupStatus: number; // 1 active
   warmupScore: number; // 0-100 (Instantly stat_warmup_score)
   dailyLimit: number;

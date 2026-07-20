@@ -315,6 +315,11 @@ function normAccount(raw: RawAccount): AccountHealth {
     email,
     status,
     statusLabel: accountStatusLabel(status),
+    // Read-only passthrough of the provider's status text (SMTP 550 etc.) so
+    // deliverability alerts can quote it verbatim. Absent on healthy accounts.
+    statusMessage:
+      str(raw.status_message ?? raw.warmup_status_message ?? raw.error_message) ||
+      undefined,
     warmupStatus: num(raw.warmup_status),
     warmupScore,
     dailyLimit,

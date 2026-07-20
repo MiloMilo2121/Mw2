@@ -42,6 +42,25 @@ create table if not exists public.metric_snapshots (
   primary key (client_slug, day)
 );
 
+-- Alerts history (P0). Append-only audit of notifications the cron sends to a
+-- human operator (deliverability / campaign-status / open-rate / automation
+-- failures). Persistence is best-effort: the notification is delivered first,
+-- the row is written after — a failed insert never blocks an alert.
+create table if not exists public.alerts (
+  id           uuid primary key default gen_random_uuid(),
+  client_slug  text not null references public.clients(slug) on delete cascade,
+  kind         text not null,             -- account_error | campaign_status | low_open_rate | automation_failure | test
+  severity     text not null default 'warning' check (severity in ('info','warning','critical')),
+  title        text not null,
+  body         text not null,
+  context      jsonb,                      -- structured evidence (email, campaign id, ratios…)
+  channel      text,                       -- telegram | email | webhook | console | null
+  recipient    text,                       -- who it was sent to (ALERT_RECIPIENT value / url)
+  delivered    boolean not null default false,
+  created_at   timestamptz not null default now()
+);
+create index if not exists alerts_client_idx on public.alerts (client_slug, created_at desc);
+
 -- NOTE on security: this app talks to Supabase exclusively with the SERVICE ROLE
 -- key from server-side route handlers. The anon key is never used and these
 -- tables are not exposed to the browser, so Row Level Security can stay enabled
@@ -49,6 +68,7 @@ create table if not exists public.metric_snapshots (
 alter table public.clients          enable row level security;
 alter table public.feedback         enable row level security;
 alter table public.metric_snapshots enable row level security;
+alter table public.alerts           enable row level security;
 
 -- Seed an example client (mock data, no API key):
 -- insert into public.clients (slug, name, accent_color)
