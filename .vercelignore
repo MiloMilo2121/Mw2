@@ -1,0 +1,4 @@
+# Il modulo pipeline/ è Python, on-demand, fuori dal build Vercel.
+# Il deploy usa già Root Directory = dashboard/, quindi pipeline/ è escluso;
+# questo file è difesa in profondità nel caso il Root Directory cambi.
+pipeline/
