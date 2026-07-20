@@ -54,3 +54,93 @@ alter table public.metric_snapshots enable row level security;
 -- insert into public.clients (slug, name, accent_color)
 -- values ('acme', 'Acme Outbound', '#6366f1')
 -- on conflict (slug) do nothing;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Pipeline "cestini" module (pipeline/, Python, on-demand).
+-- ADDITIVE migration — the three tables above are untouched.
+-- The Python pipeline WRITES here with the SERVICE ROLE key; the dashboard will
+-- READ (separate task). Same posture as above: RLS ON, no public policies
+-- (default deny). Never exposed to the browser.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- One row per pipeline run (a batch over a wave CSV).
+create table if not exists public.pipeline_runs (
+  id                uuid primary key default gen_random_uuid(),
+  client_slug       text not null references public.clients(slug) on delete cascade,
+  started_at        timestamptz not null default now(),
+  finished_at       timestamptz,
+  n_input           integer not null default 0,
+  n_output          integer not null default 0,
+  costo_stimato_eur numeric not null default 0,
+  provider_usati    text[] not null default '{}'
+);
+create index if not exists pipeline_runs_client_idx on public.pipeline_runs (client_slug, started_at desc);
+
+-- One row per deduped lead (agency domain) within a run.
+create table if not exists public.leads (
+  id           uuid primary key default gen_random_uuid(),
+  client_slug  text not null references public.clients(slug) on delete cascade,
+  run_id       uuid not null references public.pipeline_runs(id) on delete cascade,
+  dominio      text not null,
+  company      text,
+  email        text,
+  email_valid  boolean,
+  city         text,
+  provincia    text,
+  created_at   timestamptz not null default now(),
+  unique (run_id, dominio)                 -- dedup per dominio, per run
+);
+create index if not exists leads_run_idx on public.leads (run_id);
+create index if not exists leads_client_idx on public.leads (client_slug);
+
+-- Extracted flags. Every flag carries evidence + source (root CLAUDE.md §5):
+-- no evidence → the flag is 'unknown', never guessed.
+create table if not exists public.flags (
+  id         uuid primary key default gen_random_uuid(),
+  lead_id    uuid not null references public.leads(id) on delete cascade,
+  tipo       text not null,               -- open_house | struttura | nome_usabile | fascia_prezzo | invenduto_ratio | zona | solo_affitti
+  valore     text,
+  confidence numeric,
+  evidenza   text,
+  source_url text,
+  provider   text,                         -- apify | perplexity | scrape_direct | llm | csv_seed | code
+  created_at timestamptz not null default now()
+);
+create index if not exists flags_lead_idx on public.flags (lead_id);
+create index if not exists flags_tipo_idx on public.flags (tipo);
+
+-- Cestino assignment + resolved sequence recipe per lead, per run.
+create table if not exists public.cestini (
+  id          uuid primary key default gen_random_uuid(),
+  lead_id     uuid not null references public.leads(id) on delete cascade,
+  run_id      uuid not null references public.pipeline_runs(id) on delete cascade,
+  cestino     text not null,               -- A | B | C | D | E
+  motivo      text,
+  sequenza_id text,
+  tono        text,
+  con_nome    boolean not null default false,
+  created_at  timestamptz not null default now(),
+  unique (run_id, lead_id)
+);
+create index if not exists cestini_run_idx on public.cestini (run_id, cestino);
+
+-- Measured classifier error per flag per run. A cestino whose flag error_rate
+-- exceeds the threshold is approvato=false and MUST be excluded from export.
+create table if not exists public.qa_results (
+  id         uuid primary key default gen_random_uuid(),
+  run_id     uuid not null references public.pipeline_runs(id) on delete cascade,
+  flag_tipo  text not null,
+  campione_n integer not null default 0,
+  errori_n   integer not null default 0,
+  error_rate numeric not null default 0,
+  approvato  boolean not null default false,
+  created_at timestamptz not null default now(),
+  unique (run_id, flag_tipo)
+);
+create index if not exists qa_results_run_idx on public.qa_results (run_id);
+
+alter table public.pipeline_runs enable row level security;
+alter table public.leads         enable row level security;
+alter table public.flags         enable row level security;
+alter table public.cestini       enable row level security;
+alter table public.qa_results    enable row level security;
