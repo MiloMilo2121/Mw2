@@ -87,7 +87,10 @@ Nuovi invii/giorno per campagna. Si SALE di un livello solo dopo **3 giorni 🟢
 - **Gate giorno 🟢**: open reali > 35% AND bounce < 5% AND nessun 5.7.1 AND nessuna campagna in status negativo.
 - **STEP-DOWN**: un solo giorno 🔴 (open < 20% OR bounce > 5% OR un 5.7.1 OR status negativo) → −1 livello **e GENERIC Sassi → 0 nuovi**; resta finché non torni 🟢 per 2 giorni.
 - **GENERIC Sassi** parte più basso e scende per prima: storico 0% aperture reali su 42 invii = canale in spam, il più a rischio di ri-innescare il 5.7.1.
-- Vincolo casella: i nuovi invii per casella restano ≤ warmup-safe; non superare i daily_limit nominali (30/30/20) sommando campagne + warmup.
+- **`daily_limit` è PER CASELLA di invio**, non totale campagna. Le due Sassi (CON NOME + GENERIC) condividono le stesse 2 caselle `e.sassi@`+`emanuele.sassi@`; Rosa 4 usa solo `rosa.carretta@`. Quindi a L0 il carico effettivo ≈ CN Sassi 10/g + GENERIC 6/g (su 2 caselle) + Rosa 4 5/g. Vincolo: la somma per casella (campagne + warmup) non deve superare il daily_limit nominale della casella (30/30/20).
+
+### Audit — cambi volume applicati
+- **21/07/2026 16:47 UTC · L0 applicato** (esecutore: Claude via MCP `update_campaign`, su ok esplicito di Marco in chat). daily_limit: CON NOME Sassi **15→5**, CON NOME Rosa 4 **20→5**, GENERIC Sassi **15→3**. Motivo: rampa soft post-riattivazione, reputazione ancora compromessa (GENERIC 0% aperture, bounce 19–43%). **Rollback:** rimettere daily_limit 15 / 20 / 15 sulle rispettive campagne.
 
 ## 5 · Come rilanciare / ricreare la Routine
 
