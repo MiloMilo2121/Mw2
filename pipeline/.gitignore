@@ -2,6 +2,14 @@
 .env
 .env.local
 
+# Dati di run: input reali, cache enrichment, output. Mai nel repo.
+data/in/*.csv
+data/cache/
+data/out/
+qa/*.csv
+
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
+.venv/

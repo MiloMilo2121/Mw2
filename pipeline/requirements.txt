@@ -1,0 +1,8 @@
+# Runtime deps for the cestini pipeline (Python 3.11+).
+# HTTP-only clients (no heavy SDKs): we talk to Apify / MillionVerifier /
+# Perplexity / Anthropic / Supabase over plain REST with requests.
+pyyaml>=6.0
+requests>=2.31
+
+# Dev
+pytest>=8.0

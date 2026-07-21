@@ -11,6 +11,18 @@ input_mapping:            # colonne del CSV wave (Apollo)
   description: "Company Short Description"
 
 providers:
+  apify:
+    enabled: true
+    actor_immobiliare: ""   # SLOT — id/username~actor dell'actor immobiliare.it (impostare prima del live)
+    actor_idealista: ""     # SLOT — fallback Idealista
+    max_items: 40
+    cost_per_domain_eur: 0.05
+  millionverifier:
+    enabled: true
+    cost_per_email_eur: 0.0006
+  classify:
+    model: ""               # vuoto → default claude-sonnet-5
+    cost_per_domain_eur: 0.01
   scrape_direct:
     enabled: true
     pages: ["/", "annunci", "immobili", "vendite", "blog", "news"]   # match fuzzy sui link interni
