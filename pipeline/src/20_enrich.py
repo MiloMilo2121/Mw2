@@ -19,7 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from lib import config
-from lib.budget import BudgetExceeded, BudgetGuard
+from lib.budget import BudgetGuard
 from lib.cache import is_cached, read_cache, write_cache
 from lib.providers import apify
 from lib.runlog import append_stage
@@ -69,14 +69,15 @@ def main() -> int:
     enriched, errors = 0, 0
     for lead in todo:
         domain = lead["dominio"]
-        try:
-            budget.charge("apify", per_domain)
-        except BudgetExceeded as e:
-            print(f"STOP (budget): {e}")
+        if budget.would_exceed(per_domain):
+            print(f"STOP (budget): cap {budget.cap:.2f} EUR raggiunto")
             break
         frag = apify.enrich_domain(token, domain, cfg)
         if frag.get("errors"):
-            errors += 1
+            errors += 1  # run fallita → non si addebita
+        else:
+            budget.charge("apify", per_domain)  # addebita solo le run riuscite
+            enriched += 1
         write_cache(domain, {
             "domain": domain,
             "seed": lead.get("seed", {}),
@@ -86,7 +87,6 @@ def main() -> int:
             "providers": frag.get("providers", []),
             "errors": frag.get("errors", []),
         })
-        enriched += 1
 
     append_stage("enrich", {"enriched": enriched, "cached_skip": skipped, "errors": errors,
                             "budget_spent_eur": round(budget.spent, 4), "dry_run": False})
