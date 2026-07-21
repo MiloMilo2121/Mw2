@@ -18,10 +18,11 @@ APIFY_BASE = "https://api.apify.com/v2"
 
 
 def run_actor(token: str, actor_id: str, run_input: dict, timeout: int = 300) -> list:
-    # Apify path uses "username~actorname".
+    # Apify path uses "username~actorname". Auth via header (NOT ?token= in the
+    # URL) so the token never leaks into request/error messages.
     path_id = actor_id.replace("/", "~")
-    url = f"{APIFY_BASE}/acts/{path_id}/run-sync-get-dataset-items?token={token}"
-    res = requests.post(url, json=run_input, timeout=timeout)
+    url = f"{APIFY_BASE}/acts/{path_id}/run-sync-get-dataset-items"
+    res = requests.post(url, json=run_input, headers={"Authorization": f"Bearer {token}"}, timeout=timeout)
     res.raise_for_status()
     data = res.json()
     return data if isinstance(data, list) else data.get("items", [])
