@@ -81,9 +81,9 @@ def main() -> int:
         email = r["email"]
         email_valid = None
         if not args.dry_run and email:
-            budget.charge("millionverifier", millionverifier.cost_per_email_eur(cfg))
             key = config.env("MILLIONVERIFIER_API")
             if key:
+                budget.charge("millionverifier", millionverifier.cost_per_email_eur(cfg))
                 try:
                     email_valid, _ = millionverifier.verify(key, email)
                 except Exception as e:  # noqa: BLE001 — one bad email must not stop ingest

@@ -93,6 +93,16 @@ def main() -> int:
                 budget.charge("classify", per_domain)
                 parsed = classify.classify_domain(api_key, domain, cache, cfg)
                 rows += llm_flags(lead["id"], parsed)
+                # fascia_prezzo from the LLM when the crawler gave no structured
+                # listings (website-content-crawler returns text, not prices).
+                if not any(f["tipo"] == "fascia_prezzo" for f in rows):
+                    fp = parsed.get("fascia_prezzo") or {}
+                    med = fp.get("mediana_eur")
+                    if isinstance(med, (int, float)) and med > 0:
+                        rows.append({"lead_id": lead["id"], "tipo": "fascia_prezzo",
+                                     "valore": str(int(med)),
+                                     "evidenza": f"{fp.get('n_annunci_letti', '?')} annunci (LLM)",
+                                     "provider": "llm"})
                 classified += 1
             except BudgetExceeded as e:
                 print(f"STOP (budget): {e}")

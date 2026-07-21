@@ -21,10 +21,13 @@ input_mapping:            # colonne del CSV Veneto v2 (scraper). Formato config-
 providers:
   apify:
     enabled: true
-    actor_immobiliare: ""   # SLOT — id/username~actor dell'actor immobiliare.it (impostare prima del live)
-    actor_idealista: ""     # SLOT — fallback Idealista
-    max_items: 40
-    cost_per_domain_eur: 0.05
+    actor: "apify/website-content-crawler"   # crawla il sito dell'agenzia (dal dominio)
+    crawler_type: "cheerio"                   # "playwright:firefox" per siti JS (più caro/lento)
+    max_pages: 6
+    max_depth: 1
+    cost_per_domain_eur: 0.02                 # stima — calibrata dal test50
+    # Upgrade futuro: actor immobiliare.it dedicato (prezzi/date strutturati) —
+    # richiede prima il mapping dominio → profilo immobiliare.it.
   millionverifier:
     enabled: true
     cost_per_email_eur: 0.0006
