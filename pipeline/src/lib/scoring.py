@@ -96,8 +96,15 @@ def resolve_sequence(cestino: str, zona: str, sequences: dict, feedback: dict) -
         if chosen is None:
             gaps.append(step.get("slot"))
 
-    tono_raw = block.get("tono", "")
-    tono = "istituzionale" if tono_raw == "istituzionale_sempre" else (feedback.get("tono_note") or "default")
+    if block.get("tono") == "istituzionale_sempre":
+        tono = "istituzionale"
+    else:
+        tono = (
+            (feedback.get("tono_per_cestino", {}) or {}).get(cestino)
+            or feedback.get("tono_default")
+            or feedback.get("tono_note")
+            or "default"
+        )
     seq_id = f"{cestino}/{zona}" if zona else cestino
     return {"sequenza_id": seq_id, "tono": tono, "giorni": block.get("giorni", []), "emails": emails, "gaps": gaps}
 

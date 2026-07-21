@@ -36,13 +36,18 @@ def request(
         try:
             res = requests.request(method, url, headers=headers, json=json, params=params, timeout=timeout)
         except requests.RequestException as e:
-            last_exc = e
+            # Redact any query string (some APIs, e.g. MillionVerifier, carry the
+            # key as a URL param) so it never lands in a logged exception.
+            last_exc = requests.RequestException(str(e).split("?")[0])
             if attempt == retries:
-                raise
+                raise last_exc
         else:
-            if res.status_code < 400 or not should_retry(res.status_code) or attempt == retries:
-                res.raise_for_status()
+            if res.status_code < 400:
                 return res
+            if not should_retry(res.status_code) or attempt == retries:
+                raise requests.HTTPError(
+                    f"{res.status_code} {res.reason} for {url.split('?')[0]}", response=res
+                )
         time.sleep(backoff * (2 ** attempt))
     # Unreachable, but keeps type-checkers happy.
     raise last_exc if last_exc else RuntimeError("request failed")

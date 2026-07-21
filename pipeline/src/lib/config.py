@@ -66,7 +66,10 @@ def client_slug() -> str:
 
 
 def budget_cap_eur() -> float:
+    # Cap PER STAGE (ingest/enrich/classify each instantiate their own guard).
+    # Enrich is the driver: ~domains × apify.cost_per_domain_eur. Default sized
+    # for the email-only run (~2.5k × €0.02 ≈ €51).
     try:
-        return float(env("BUDGET_EUR_MAX", "40") or 40)
+        return float(env("BUDGET_EUR_MAX", "60") or 60)
     except ValueError:
-        return 40.0
+        return 60.0

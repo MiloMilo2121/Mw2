@@ -27,7 +27,7 @@ from lib.cache import read_cache, read_flags_cache, write_flags_cache
 from lib.db import SupabaseWriter
 from lib.flags_det import invenduto_ratio, median_price
 from lib.parallel import run_pool
-from lib.runlog import append_stage
+from lib.runlog import append_stage, merge_errors
 
 
 def det_flags(lead_id: str, cache: dict, seed: dict) -> list[dict]:
@@ -109,7 +109,7 @@ def main() -> int:
         domain, lid = lead["dominio"], lead["id"]
         cache = read_cache(domain)
         rows = det_flags(lid, cache or {}, lead.get("seed", {}))
-        status = "det_only"
+        status, err_msg = "det_only", ""
         parsed = None
         if live and cache and cache.get("text"):
             cached = None if args.force else read_flags_cache(domain)
@@ -122,7 +122,8 @@ def main() -> int:
                     write_flags_cache(domain, parsed)
                     status = "classified"
                 except Exception as e:  # noqa: BLE001 — one bad domain must not stop the batch
-                    print(f"  classify failed for {domain}: {e}")
+                    err_msg = str(e).split("?")[0]
+                    print(f"  classify failed for {domain}: {err_msg}")
                     status = "error"
         if parsed is not None:
             llm = llm_flags(lid, parsed)
@@ -131,13 +132,17 @@ def main() -> int:
             for f in llm:
                 f.pop("_from_llm", None)
             rows += llm
-        return {"domain": domain, "rows": rows, "status": status}
+        return {"domain": domain, "rows": rows, "status": status, "error": err_msg}
 
     workers = int((cfg.get("concurrency", {}) or {}).get("classify", 10))
     results = run_pool(leads, classify_one, workers)
     all_rows = [r for res in results for r in res["rows"]]
     preview = [{"dominio": res["domain"], "flags": res["rows"]} for res in results]
     st = Counter(res["status"] for res in results)
+    fails = [{"domain": r["domain"], "stage": "classify", "error": r.get("error", "")}
+             for r in results if r["status"] == "error"]
+    if fails:
+        merge_errors("classify", fails)
 
     if all_rows:
         db.insert("flags", all_rows)

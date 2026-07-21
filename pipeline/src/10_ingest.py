@@ -91,7 +91,7 @@ def main() -> int:
                 try:
                     email_valid, _ = millionverifier.verify(key, email)
                 except Exception as e:  # noqa: BLE001 — one bad email must not stop ingest
-                    print(f"  email check failed for {email}: {e}")
+                    print(f"  email check failed for {email}: {str(e).split('?')[0]}")
         seed = {
             "struttura": struttura_seed(r["employees"], r["retail_locations"]),
             "nome_usabile": nome_seed(r["title"], r["seniority"]),

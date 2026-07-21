@@ -35,6 +35,14 @@ def is_cached(domain: str) -> bool:
     return cache_path(domain).exists()
 
 
+def is_enriched(domain: str) -> bool:
+    """True ONLY for a successful enrichment (has text, no errors). A failed or
+    empty enrichment returns False so the resume pass retries it instead of
+    freezing it into cestino E forever."""
+    c = read_cache(domain)
+    return bool(c and c.get("text") and not c.get("errors"))
+
+
 # ── Classifier-result cache (resume: skip re-calling the LLM) ─────────────────
 
 def flags_cache_path(domain: str):

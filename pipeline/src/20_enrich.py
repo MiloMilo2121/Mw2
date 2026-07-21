@@ -20,10 +20,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from lib import config
 from lib.budget import BudgetGuard
-from lib.cache import is_cached, read_cache, write_cache
+from lib.cache import is_enriched, read_cache, write_cache
 from lib.parallel import run_pool
 from lib.providers import apify
-from lib.runlog import append_stage
+from lib.runlog import append_stage, merge_errors
 
 
 def load_state() -> dict:
@@ -52,7 +52,8 @@ def main() -> int:
     budget = BudgetGuard(config.budget_cap_eur())
     token = config.env("APIFY_API")
 
-    todo = [l for l in leads if args.force or not is_cached(l["dominio"])]
+    # Resume on SUCCESSFUL enrichments only → failed/empty domains get retried.
+    todo = [l for l in leads if args.force or not is_enriched(l["dominio"])]
     skipped = len(leads) - len(todo)
 
     if args.dry_run:
@@ -74,10 +75,11 @@ def main() -> int:
         print(f"budget: cap {budget.cap:.2f} EUR → arrivo a {affordable}/{len(todo)} domini ({truncated} rimandati)")
         todo = todo[:affordable]
 
-    def enrich_one(lead: dict) -> str:
+    def enrich_one(lead: dict) -> dict:
         domain = lead["dominio"]
         frag = apify.enrich_domain(token, domain, cfg)
-        ok = not frag.get("errors")
+        errs = frag.get("errors") or []
+        ok = not errs
         if ok:
             budget.charge("apify", per_domain)  # thread-safe; only successful runs
         write_cache(domain, {
@@ -87,13 +89,17 @@ def main() -> int:
             "text": frag["text"],
             "sources": frag["sources"],
             "providers": frag.get("providers", []),
-            "errors": frag.get("errors", []),
+            "errors": errs,
         })
-        return "ok" if ok else "err"
+        return {"status": "ok" if ok else "err", "domain": domain, "error": errs[0] if errs else ""}
 
     workers = int((cfg.get("concurrency", {}) or {}).get("enrich", 6))
     results = run_pool(todo, enrich_one, workers)
-    enriched, errors = results.count("ok"), results.count("err")
+    enriched = sum(1 for r in results if r["status"] == "ok")
+    errors = sum(1 for r in results if r["status"] == "err")
+    fails = [{"domain": r["domain"], "stage": "enrich", "error": r["error"]} for r in results if r["status"] == "err"]
+    if fails:
+        merge_errors("enrich", fails)
 
     append_stage("enrich", {"enriched": enriched, "cached_skip": skipped, "errors": errors,
                             "budget_truncated": truncated, "workers": workers,
