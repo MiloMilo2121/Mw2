@@ -66,6 +66,10 @@ scoring:
     D: {when: "struttura in [multi_sede_piccola, mini_franchising]", copy: "B2 multiproposte", priority: 4}
     E: {when: "else", copy: "core GENERIC", priority: 5}
 
+concurrency:                    # parallelismo delle fasi I/O-bound (thread pool)
+  enrich: 6                     # Apify in parallelo (occhio ai rate limit dell'account)
+  classify: 12                  # OpenRouter regge bene il parallelo
+
 qa:
   sample_size: 30
   stratify_by: ["cestino"]

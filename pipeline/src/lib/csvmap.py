@@ -40,6 +40,25 @@ def read_rows(path: str | Path, mapping: dict) -> list[dict]:
         return [map_row(r, mapping) for r in csv.DictReader(f)]
 
 
+def header_of(path: str | Path) -> list[str]:
+    with open(path, newline="", encoding="utf-8-sig") as f:
+        return next(csv.reader(f), [])
+
+
+def missing_columns(path: str | Path, mapping: dict, required=("domain",)) -> list[str]:
+    """Mapped keys whose source column is absent from the CSV header (or unmapped).
+    Guards against a wrong input_mapping silently yielding zero leads."""
+    header = set(header_of(path))
+    out: list[str] = []
+    for key in required:
+        col = mapping.get(key, "")
+        if not col:
+            out.append(f"{key}→(non mappata)")
+        elif col not in header:
+            out.append(f"{key}→'{col}'")
+    return out
+
+
 def _to_int(x: str) -> int | None:
     try:
         return int(float(str(x).strip()))

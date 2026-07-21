@@ -71,6 +71,18 @@ def test_resolve_sequence_records_gap_when_no_approved():
     assert r["tono"] == "istituzionale"
 
 
+def test_resolve_sequence_tono_matrix():
+    sequences = {"cestini": {
+        "A": {"tono": "da_feedback", "step": [{"slot": "g", "email": "x"}]},
+        "B": {"tono": "da_feedback", "step": [{"slot": "g", "email": "x"}]},
+        "E": {"tono": "istituzionale_sempre", "step": [{"slot": "g", "email": "x"}]},
+    }}
+    fb = {"email": {"x": "approvato"}, "tono_per_cestino": {"A": "T1"}, "tono_default": "T2"}
+    assert resolve_sequence("A", "", sequences, fb)["tono"] == "T1"            # per-cestino override
+    assert resolve_sequence("B", "", sequences, fb)["tono"] == "T2"            # falls to default
+    assert resolve_sequence("E", "", sequences, fb)["tono"] == "istituzionale"  # sempre
+
+
 def test_qa_gate_and_error_rate():
     assert error_rate([1, 1, 0, 1]) == 0.25
     assert error_rate([]) == 0.0

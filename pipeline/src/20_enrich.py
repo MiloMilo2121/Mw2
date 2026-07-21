@@ -20,9 +20,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from lib import config
 from lib.budget import BudgetGuard
-from lib.cache import is_cached, read_cache, write_cache
+from lib.cache import is_enriched, read_cache, write_cache
+from lib.parallel import run_pool
 from lib.providers import apify
-from lib.runlog import append_stage
+from lib.runlog import append_stage, merge_errors
 
 
 def load_state() -> dict:
@@ -51,7 +52,8 @@ def main() -> int:
     budget = BudgetGuard(config.budget_cap_eur())
     token = config.env("APIFY_API")
 
-    todo = [l for l in leads if args.force or not is_cached(l["dominio"])]
+    # Resume on SUCCESSFUL enrichments only → failed/empty domains get retried.
+    todo = [l for l in leads if args.force or not is_enriched(l["dominio"])]
     skipped = len(leads) - len(todo)
 
     if args.dry_run:
@@ -66,18 +68,20 @@ def main() -> int:
         print("APIFY_API missing — set it or use --dry-run.")
         return 1
 
-    enriched, errors = 0, 0
-    for lead in todo:
+    # Cap the batch to what the budget affords, up front (§6: no silent partial).
+    affordable = budget.affordable(per_domain)
+    truncated = max(0, len(todo) - affordable)
+    if truncated:
+        print(f"budget: cap {budget.cap:.2f} EUR → arrivo a {affordable}/{len(todo)} domini ({truncated} rimandati)")
+        todo = todo[:affordable]
+
+    def enrich_one(lead: dict) -> dict:
         domain = lead["dominio"]
-        if budget.would_exceed(per_domain):
-            print(f"STOP (budget): cap {budget.cap:.2f} EUR raggiunto")
-            break
         frag = apify.enrich_domain(token, domain, cfg)
-        if frag.get("errors"):
-            errors += 1  # run fallita → non si addebita
-        else:
-            budget.charge("apify", per_domain)  # addebita solo le run riuscite
-            enriched += 1
+        errs = frag.get("errors") or []
+        ok = not errs
+        if ok:
+            budget.charge("apify", per_domain)  # thread-safe; only successful runs
         write_cache(domain, {
             "domain": domain,
             "seed": lead.get("seed", {}),
@@ -85,12 +89,23 @@ def main() -> int:
             "text": frag["text"],
             "sources": frag["sources"],
             "providers": frag.get("providers", []),
-            "errors": frag.get("errors", []),
+            "errors": errs,
         })
+        return {"status": "ok" if ok else "err", "domain": domain, "error": errs[0] if errs else ""}
+
+    workers = int((cfg.get("concurrency", {}) or {}).get("enrich", 6))
+    results = run_pool(todo, enrich_one, workers)
+    enriched = sum(1 for r in results if r["status"] == "ok")
+    errors = sum(1 for r in results if r["status"] == "err")
+    fails = [{"domain": r["domain"], "stage": "enrich", "error": r["error"]} for r in results if r["status"] == "err"]
+    if fails:
+        merge_errors("enrich", fails)
 
     append_stage("enrich", {"enriched": enriched, "cached_skip": skipped, "errors": errors,
+                            "budget_truncated": truncated, "workers": workers,
                             "budget_spent_eur": round(budget.spent, 4), "dry_run": False})
-    print(f"enrich: {enriched} enriched, {skipped} cached, {errors} errors, spent {budget.spent:.3f} EUR")
+    print(f"enrich: {enriched} enriched, {skipped} cached, {errors} errors, "
+          f"spent {budget.spent:.3f} EUR ({workers} paralleli)")
     return 0
 
 

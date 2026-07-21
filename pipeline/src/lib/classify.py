@@ -12,9 +12,8 @@ from __future__ import annotations
 
 import json
 
-import requests
-
 from .config import PROMPTS, env
+from .http import request as http_request
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 DEFAULT_MODEL = "deepseek/deepseek-chat"
@@ -66,13 +65,14 @@ def parse_json(text: str) -> dict:
 
 def classify_domain(api_key: str, domain: str, cache: dict, cfg: dict, timeout: int = 60) -> dict:
     c = _cfg(cfg)
-    res = requests.post(
+    res = http_request(
+        "POST",
         f"{c['base_url']}/chat/completions",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        data=json.dumps(build_request(domain, cache, cfg)),
+        json=build_request(domain, cache, cfg),
         timeout=timeout,
+        retries=3,
     )
-    res.raise_for_status()
     data = res.json()
     text = data["choices"][0]["message"]["content"]
     return parse_json(text)

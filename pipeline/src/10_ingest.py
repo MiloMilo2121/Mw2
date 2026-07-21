@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))  # make `lib` importabl
 
 from lib import config
 from lib.budget import BudgetGuard
-from lib.csvmap import nome_seed, read_rows, struttura_seed
+from lib.csvmap import missing_columns, nome_seed, read_rows, struttura_seed
 from lib.db import SupabaseWriter
 from lib.domains import dedup_by_domain
 from lib.exclusions import excluded_by_brand
@@ -51,6 +51,10 @@ def main() -> int:
     if not input_path or not input_path.exists():
         print(f"No input CSV (looked in {config.DATA_IN}). Drop the wave export there.")
         return 1
+
+    miss = missing_columns(input_path, mapping, required=("domain",))
+    if miss:
+        print(f"ATTENZIONE: input_mapping non combacia col CSV ({', '.join(miss)}) — 0 lead probabili.")
 
     rows = read_rows(input_path, mapping)
     n_raw = len(rows)
@@ -87,7 +91,7 @@ def main() -> int:
                 try:
                     email_valid, _ = millionverifier.verify(key, email)
                 except Exception as e:  # noqa: BLE001 — one bad email must not stop ingest
-                    print(f"  email check failed for {email}: {e}")
+                    print(f"  email check failed for {email}: {str(e).split('?')[0]}")
         seed = {
             "struttura": struttura_seed(r["employees"], r["retail_locations"]),
             "nome_usabile": nome_seed(r["title"], r["seniority"]),
