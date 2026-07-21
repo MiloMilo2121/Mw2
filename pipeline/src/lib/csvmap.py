@@ -14,9 +14,11 @@ def _get(row: dict, mapping: dict, key: str) -> str:
 
 
 def map_row(row: dict, mapping: dict) -> dict:
-    """One CSV row → canonical fields + raw extras used by the seed functions."""
+    """One CSV row → canonical fields. Fully config-driven: every source column
+    (incl. the seed signals) comes from input_mapping, so a new export format is
+    a config change, not a code change."""
     return {
-        "dominio": normalize_domain(_get(row, mapping, "domain")),
+        "dominio": normalize_domain(_get(row, mapping, "domain") or _get(row, mapping, "domain_fallback")),
         "company": _get(row, mapping, "company"),
         "first_name": _get(row, mapping, "first_name"),
         "last_name": _get(row, mapping, "last_name"),
@@ -25,11 +27,11 @@ def map_row(row: dict, mapping: dict) -> dict:
         "city": _get(row, mapping, "city"),
         "keywords": _get(row, mapping, "keywords"),
         "description": _get(row, mapping, "description"),
-        # Extra Apollo columns used only as initial signals (§3):
-        "state": (row.get("Company State", "") or "").strip(),
-        "title": (row.get("Title", "") or "").strip(),
-        "seniority": (row.get("Seniority", "") or "").strip(),
-        "retail_locations": (row.get("Number of Retail Locations", "") or "").strip(),
+        # Seed signals (§3) — read via mapping keys; empty when the column is absent.
+        "state": _get(row, mapping, "state") or _get(row, mapping, "province"),
+        "title": _get(row, mapping, "title"),
+        "seniority": _get(row, mapping, "seniority"),
+        "retail_locations": _get(row, mapping, "retail_locations"),
     }
 
 

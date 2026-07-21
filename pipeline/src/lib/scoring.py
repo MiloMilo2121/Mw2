@@ -35,6 +35,11 @@ def flags_to_dict(flag_rows: list[dict], seed: dict | None = None) -> dict:
     return out
 
 
+def is_solo_affitti(flags: dict) -> bool:
+    """Rentals-only agency → excluded before cestino assignment (§Esclusioni)."""
+    return str(flags.get("solo_affitti", "")).strip().lower() in ("true", "si", "1")
+
+
 def _price(flags: dict) -> float | None:
     v = flags.get("fascia_prezzo")
     try:

@@ -1,14 +1,22 @@
 # geriko-cestini — configurazione
-input_mapping:            # colonne del CSV wave (Apollo)
-  domain: "Company Website Short"
-  company: "Cleaned Company Name"
-  first_name: "First Name"
-  last_name: "Last Name"
-  email: "Email"
-  employees: "Employee Count"
-  city: "Company City"
-  keywords: "Company Keywords"
-  description: "Company Short Description"
+input_mapping:            # colonne del CSV Veneto v2 (scraper). Formato config-driven:
+  domain: "official_website"        # per un altro export, cambiano solo questi nomi.
+  domain_fallback: "website"        # se official_website è vuoto
+  company: "company_name"
+  first_name: ""                    # non presente in questo export
+  last_name: ""
+  email: "email_inferred"
+  employees: ""                     # non presente → struttura resta da enrichment/LLM
+  city: "city"
+  province: "_prov_query"           # sigla provincia (PD, TV, VE…) → seed zona
+  keywords: "category"
+  description: ""
+  title: ""                         # decision_maker_name quasi sempre vuoto (12/10130)
+  seniority: ""
+  retail_locations: ""
+  # Formato Apollo precedente (per riferimento):
+  #   domain "Company Website Short" · company "Cleaned Company Name" · email "Email"
+  #   employees "Employee Count" · city "Company City" · state "Company State"
 
 providers:
   apify:

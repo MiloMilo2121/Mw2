@@ -7,6 +7,9 @@ MAPPING = {
     "email": "Email",
     "employees": "Employee Count",
     "city": "Company City",
+    "state": "Company State",
+    "title": "Title",
+    "retail_locations": "Number of Retail Locations",
 }
 
 

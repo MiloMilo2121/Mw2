@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib import config
 from lib.db import SupabaseWriter
 from lib.runlog import append_stage
-from lib.scoring import assign_cestino, flags_to_dict, resolve_sequence
+from lib.scoring import assign_cestino, flags_to_dict, is_solo_affitti, resolve_sequence
 
 
 def _load(name: str) -> dict:
@@ -56,9 +56,13 @@ def main() -> int:
     run_id = state["run_id"]
 
     rows, handoff, counts = [], [], {}
+    excluded_sa = 0
     for lead in leads:
         dom = lead["dominio"]
         flags = flags_to_dict(flags_by_domain.get(dom, []), lead.get("seed"))
+        if is_solo_affitti(flags):
+            excluded_sa += 1
+            continue  # rentals-only → not a target (§Esclusioni)
         cestino, motivo = assign_cestino(flags)
         zona = (lead.get("seed") or {}).get("zona", "")
         recipe = resolve_sequence(cestino, zona, sequences, feedback)
@@ -80,8 +84,9 @@ def main() -> int:
     (config.DATA_OUT / "cestini.json").write_text(
         json.dumps(handoff, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    append_stage("score", {"leads": len(leads), "by_cestino": counts})
-    print(f"score: {len(leads)} leads → " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
+    append_stage("score", {"leads": len(leads), "by_cestino": counts, "excluded_solo_affitti": excluded_sa})
+    print(f"score: {len(leads)} leads ({excluded_sa} esclusi solo-affitti) → "
+          + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())))
     return 0
 
 

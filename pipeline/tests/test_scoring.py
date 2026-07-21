@@ -3,9 +3,17 @@ from lib.scoring import (
     error_rate,
     flags_to_dict,
     is_cestino_approved,
+    is_solo_affitti,
     qa_gate,
     resolve_sequence,
 )
+
+
+def test_is_solo_affitti():
+    assert is_solo_affitti({"solo_affitti": "True"}) is True
+    assert is_solo_affitti({"solo_affitti": "si"}) is True
+    assert is_solo_affitti({"solo_affitti": "False"}) is False
+    assert is_solo_affitti({}) is False
 
 
 def test_assign_cestino_tree():

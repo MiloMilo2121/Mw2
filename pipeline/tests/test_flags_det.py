@@ -25,3 +25,6 @@ def test_zona_from_state():
     assert zona_from_state("Veneto") == "veneto_triveneto"
     assert zona_from_state("Emilia-Romagna") == "emilia"
     assert zona_from_state("Sicily") == ""
+    # Sigle provincia (scraper Veneto)
+    assert zona_from_state("PD") == "veneto_triveneto"
+    assert zona_from_state("tv") == "veneto_triveneto"

@@ -59,6 +59,12 @@ _ZONE_MAP = {
     "friuli venezia giulia": "veneto_triveneto",
     "emilia-romagna": "emilia",
     "emilia romagna": "emilia",
+    # Sigle provincia (scraper Veneto/Triveneto) → macro-zona.
+    "ve": "veneto_triveneto", "pd": "veneto_triveneto", "vr": "veneto_triveneto",
+    "vi": "veneto_triveneto", "tv": "veneto_triveneto", "ro": "veneto_triveneto",
+    "bl": "veneto_triveneto", "ud": "veneto_triveneto", "go": "veneto_triveneto",
+    "pn": "veneto_triveneto", "ts": "veneto_triveneto", "tn": "veneto_triveneto",
+    "bz": "veneto_triveneto",
 }
 
 
