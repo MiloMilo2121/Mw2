@@ -298,7 +298,7 @@ function providerFromEmail(email: string): string {
   return domain || "Custom";
 }
 
-function normAccount(raw: RawAccount): AccountHealth {
+export function normAccount(raw: RawAccount): AccountHealth {
   const email = str(raw.email);
   const status = num(raw.status);
   const warmupScore = num(raw.stat_warmup_score ?? raw.warmup_score);

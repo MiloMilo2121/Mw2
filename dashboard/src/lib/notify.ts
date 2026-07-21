@@ -81,6 +81,10 @@ function recipient(): string | undefined {
   return (process.env.ALERT_RECIPIENT || "").trim() || undefined;
 }
 
+/** Abort a notification request after this many ms so a hung endpoint can't
+ *  stall the cron (which shares one maxDuration budget across all clients). */
+const NOTIFY_TIMEOUT_MS = 10_000;
+
 /**
  * Send one alert through the configured channel. Never throws: every failure is
  * captured into the returned NotifyResult so the caller (a cron) is never broken
@@ -121,6 +125,7 @@ async function sendWebhook(text: string, e: AlertEvent): Promise<NotifyResult> {
       content: text,
       alert: { kind: e.kind, severity: e.severity, title: e.title, clientSlug: e.clientSlug },
     }),
+    signal: AbortSignal.timeout(NOTIFY_TIMEOUT_MS),
   });
   return {
     sent: res.ok,
@@ -138,6 +143,7 @@ async function sendTelegram(text: string, to?: string): Promise<NotifyResult> {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ chat_id: to, text, disable_web_page_preview: true }),
+    signal: AbortSignal.timeout(NOTIFY_TIMEOUT_MS),
   });
   return {
     sent: res.ok,
@@ -157,6 +163,7 @@ async function sendEmail(subject: string, text: string, to?: string): Promise<No
     method: "POST",
     headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
     body: JSON.stringify({ from, to, subject, text }),
+    signal: AbortSignal.timeout(NOTIFY_TIMEOUT_MS),
   });
   return {
     sent: res.ok,

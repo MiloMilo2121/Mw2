@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getClient, listClients } from "@/lib/clients";
 import { getAutomations, runAutomation, runSuppression } from "@/lib/automations";
 import { getScopedCampaignIds } from "@/lib/instantly";
-import { gatherAlerts, persistAlert } from "@/lib/alerts";
+import { gatherAlerts, persistAlert, recentlyAlerted } from "@/lib/alerts";
 import { alertChannel, sendAlert, type AlertEvent } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
@@ -78,16 +78,19 @@ export async function GET(req: Request) {
     // Wrapped so a notification failure can never break the automation cron.
     try {
       const events = await gatherAlerts(client, { automationSummary: out });
+      let notified = 0;
       for (const ev of events) {
+        // Suppress daily repeats of a persistent condition (transition-only).
+        if (await recentlyAlerted(ev)) continue;
         const res = await sendAlert(ev);
         await persistAlert(ev, res);
+        notified++;
       }
       if (events.length) {
-        out["alerts"] = events.map((e) => ({
-          kind: e.kind,
-          severity: e.severity,
-          title: e.title,
-        }));
+        out["alerts"] = {
+          active: events.map((e) => ({ kind: e.kind, severity: e.severity, title: e.title })),
+          notified,
+        };
       }
     } catch (err) {
       out["alertsError"] = (err as Error).message;

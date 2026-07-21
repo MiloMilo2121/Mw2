@@ -48,7 +48,10 @@ create table if not exists public.metric_snapshots (
 -- the row is written after — a failed insert never blocks an alert.
 create table if not exists public.alerts (
   id           uuid primary key default gen_random_uuid(),
-  client_slug  text not null references public.clients(slug) on delete cascade,
+  -- No FK to clients(slug): the audit trail must persist even for builtin/env
+  -- clients (e.g. geriko) that have no row in the clients table. Otherwise the
+  -- insert would fail the FK and the alert history would be silently empty.
+  client_slug  text not null,
   kind         text not null,             -- account_error | campaign_status | low_open_rate | automation_failure | test
   severity     text not null default 'warning' check (severity in ('info','warning','critical')),
   title        text not null,
