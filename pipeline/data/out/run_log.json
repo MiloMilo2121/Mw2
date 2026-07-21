@@ -1,0 +1,58 @@
+{
+  "stages": {
+    "ingest": {
+      "input": "/home/user/Mw2/pipeline/data/in/sample.csv",
+      "n_raw": 5,
+      "n_deduped": 4,
+      "n_excluded_brand": 1,
+      "n_leads": 3,
+      "budget_spent_eur": 0.0,
+      "dry_run": true
+    },
+    "enrich": {
+      "to_enrich": 3,
+      "cached_skip": 0,
+      "est_cost_eur": 0.15,
+      "dry_run": true
+    },
+    "classify": {
+      "leads": 3,
+      "det_only": 3,
+      "est_llm_cost_eur": 0.0,
+      "dry_run": true
+    },
+    "score": {
+      "leads": 3,
+      "by_cestino": {
+        "E": 1,
+        "D": 2
+      }
+    },
+    "qa_sample": {
+      "rows": 3,
+      "strata": [
+        "D",
+        "E"
+      ],
+      "file": "/home/user/Mw2/pipeline/qa/sample.csv"
+    },
+    "qa_recompute": {
+      "flags": {
+        "struttura": {
+          "n": 3,
+          "error_rate": 0.0,
+          "approvato": true
+        }
+      },
+      "max_error": 0.1
+    },
+    "export": {
+      "files": {
+        "D_GENERIC": 2,
+        "E_GENERIC": 1
+      },
+      "excluded": 0,
+      "qa_enforced": true
+    }
+  }
+}

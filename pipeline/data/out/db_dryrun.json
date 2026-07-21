@@ -1,0 +1,13 @@
+{
+  "qa_results": [
+    {
+      "id": "caeb5416-3958-4a26-8421-45048ef5b1db",
+      "run_id": "98ad720f-8a73-4c02-8169-6c1cfe047841",
+      "flag_tipo": "struttura",
+      "campione_n": 3,
+      "errori_n": 0,
+      "error_rate": 0.0,
+      "approvato": true
+    }
+  ]
+}

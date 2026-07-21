@@ -185,6 +185,38 @@ export async function fetchDailyForCampaigns(
   return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
 
+export type AccountDaily = { email: string; date: string; sent: number };
+
+/**
+ * GET /accounts/analytics/daily — emails sent per day, per sending account.
+ * `sent` folds in a warmup-sent field when the plan returns one, so it reflects
+ * total mailbox load (campaigns + warmup) for the quota guard.
+ */
+export async function fetchDailyAccountAnalytics(
+  apiKey: string,
+  startDate?: string,
+  endDate?: string,
+  emails?: string[]
+): Promise<AccountDaily[]> {
+  const data = await api<RawCampaignAnalytics[] | { items: RawCampaignAnalytics[] }>(
+    apiKey,
+    "/accounts/analytics/daily",
+    {
+      start_date: startDate,
+      end_date: endDate,
+      emails: emails && emails.length ? emails.join(",") : undefined,
+    }
+  );
+  const rows = Array.isArray(data) ? data : data.items ?? [];
+  return rows
+    .map((r) => ({
+      email: str(r.email ?? r.account ?? r.email_account),
+      date: str(r.date),
+      sent: num(r.sent ?? r.sent_count) + num(r.warmup_sent ?? r.sent_warmup),
+    }))
+    .filter((r) => r.email && r.date);
+}
+
 /** Whether a campaign/lead name matches any of the client's keywords. */
 export function matchesKeywords(name: string, keywords?: string[]): boolean {
   if (!keywords || keywords.length === 0) return true;

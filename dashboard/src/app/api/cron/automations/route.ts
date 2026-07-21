@@ -6,6 +6,7 @@ import {
   getScopedLiteCampaigns,
   fetchAccounts,
   fetchDailyForCampaigns,
+  fetchDailyAccountAnalytics,
   matchesKeywords,
 } from "@/lib/instantly";
 import { notify, isNotifyConfigured } from "@/lib/notify";
@@ -13,6 +14,7 @@ import {
   detectAccountAlerts,
   detectCampaignAlerts,
   detectOpenRateAlert,
+  detectQuotaAlerts,
   type Alert,
 } from "@/lib/alerts";
 
@@ -97,6 +99,31 @@ export async function GET(req: Request) {
           const openAlert = detectOpenRateAlert(point, y, client.name);
           if (openAlert) alerts.push(openAlert);
         }
+      }
+
+      // (c) quota guard: per mailbox, today's load (campaigns+warmup) vs its cap.
+      // Isolated so an unsupported per-account daily endpoint can't drop (a)/(b).
+      try {
+        const withCap = scopedAccounts.filter((a) => a.dailyLimit > 0);
+        if (withCap.length) {
+          const today = new Date().toISOString().slice(0, 10);
+          const accountDaily = await fetchDailyAccountAnalytics(
+            client.instantlyApiKey,
+            today,
+            today,
+            withCap.map((a) => a.email)
+          );
+          const load = new Map<string, number>();
+          for (const d of accountDaily) load.set(d.email, (load.get(d.email) ?? 0) + d.sent);
+          const mailboxes = withCap.map((a) => ({
+            email: a.email,
+            cap: a.dailyLimit,
+            load: load.get(a.email) ?? 0,
+          }));
+          alerts.push(...detectQuotaAlerts(mailboxes, client.name));
+        }
+      } catch (err) {
+        console.error(`[alerts] quota guard skipped: ${(err as Error).message}`);
       }
 
       for (const a of alerts) await notify(a.level, a.title, a.body);
