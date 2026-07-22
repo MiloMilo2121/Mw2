@@ -11,11 +11,14 @@
 import {
   addLeadsToCampaign,
   fetchRawCampaignLeads,
+  fetchCampaignSequence,
+  isBlocklisted,
   fetchEmails,
   addToBlocklist,
   type RawEmail,
 } from "./instantly";
 import { categorizeReply, AUTO_SUPPRESS } from "./replies";
+import { logAudit } from "./audit";
 
 type Mapping = { sourceId: string; sourceName: string; targetId: string; targetName: string };
 export type Automation = {
@@ -23,6 +26,10 @@ export type Automation = {
   name: string;
   description: string;
   minDays: number;
+  // Kill-switch. Default OFF: the automation is built and previewable (dry-run)
+  // but performs NO live writes until turned on — the Rosa campaigns are active
+  // and today bounce ~100%, so it must not send until deliverability is green.
+  enabled: boolean;
   mappings: Mapping[];
 };
 
@@ -31,10 +38,11 @@ const AUTOMATIONS: Record<string, Automation[]> = {
   geriko: [
     {
       id: "sassi-to-carretta",
-      name: "Sassi → Carretta (step 4)",
+      name: "Sassi → Rosa (chiusura, step 4)",
       description:
-        "Lead che hanno ricevuto tutti e 3 gli step Sassi, senza risposta da 2+ giorni → aggiunti alla campagna Carretta (step 4).",
-      minDays: 2,
+        "Lead che hanno ricevuto TUTTE le email della sequenza Sassi (con e senza nome), senza risposta e da 3+ giorni dall'ultima → aggiunti alla campagna Rosa 4 (chiusura). Disabilitato finché la deliverability Rosa non è verde.",
+      minDays: 3,
+      enabled: false,
       mappings: [
         {
           sourceId: "1dba8a9a-34e9-4bad-a3fd-48a6bb014483",
@@ -86,48 +94,83 @@ export type EligibleLead = {
   daysSinceLastStep: number;
 };
 
-function isEligible(raw: Record<string, unknown>, minDays: number): boolean {
-  // Received all 3 steps (3rd step index >= 2), no reply, not interested,
-  // and the last step was sent at least `minDays` ago.
-  if (lastStepIndex(raw) < 2) return false;
-  if (num(raw.email_reply_count) > 0) return false;
-  if (num(raw.lt_interest_status) > 0) return false;
+/**
+ * A lead is eligible to move Sassi → Rosa when it has received ALL emails of the
+ * source sequence, has not replied, is in a non-negative state (never a bounced
+ * or hard-stopped lead), and the last email was delivered ≥ `minDays` ago.
+ *
+ * "Received all emails" is DATA-DRIVEN: `totalSteps` comes from the source
+ * campaign definition (fetchCampaignSequence), so it's not a hardcoded "3".
+ * The lead `status` enum is treated only by sign — verified empirically that a
+ * finished lead is a positive status, a bounced/stopped one is negative — rather
+ * than betting on a specific magic number (e.g. completed is 3, not 2, in the
+ * live workspace). Blocklist exclusion happens in runAutomation (a network read).
+ */
+export function isEligible(raw: Record<string, unknown>, minDays: number, totalSteps: number): boolean {
+  const idx = lastStepIndex(raw);
+  if (idx < 0) return false;
+  if (totalSteps > 0 && idx < totalSteps - 1) return false; // not all emails received yet
+  if (num(raw.status) < 0) return false; // bounced / stopped — never move
+  if (num(raw.email_reply_count) > 0) return false; // has replied — human handles it
+  if (num(raw.lt_interest_status) > 0) return false; // marked interested
   const ts = lastStepTime(raw);
-  if (!ts) return false;
+  if (!ts) return false; // last step must have actually been delivered
   return (Date.now() - ts) / 86400000 >= minDays;
 }
 
 export type MappingResult = {
   sourceName: string;
   targetName: string;
+  totalSteps?: number;
   eligible: EligibleLead[];
   added?: number;
   error?: string;
 };
 
-/** Evaluate an automation. dryRun=true never writes. */
+/**
+ * Evaluate an automation. Writes ONLY when dryRun=false AND automation.enabled.
+ * A disabled automation still returns the eligible preview (writes nothing), so
+ * the kill-switch and the dry-run flag both gate live writes. Every live write
+ * is recorded in audit_log.
+ */
 export async function runAutomation(
   apiKey: string,
   automation: Automation,
-  dryRun: boolean
-): Promise<{ dryRun: boolean; results: MappingResult[]; totalEligible: number }> {
+  dryRun: boolean,
+  clientSlug = "geriko"
+): Promise<{ dryRun: boolean; enabled: boolean; results: MappingResult[]; totalEligible: number }> {
+  const willWrite = !dryRun && automation.enabled;
   const results: MappingResult[] = [];
   for (const m of automation.mappings) {
     try {
+      // "Received all emails" is data-driven: count the source sequence's steps.
+      let totalSteps = 0;
+      try {
+        totalSteps = (await fetchCampaignSequence(apiKey, m.sourceId)).length;
+      } catch {
+        totalSteps = 0; // fall back to "reached a last step" without the length check
+      }
+
       const raw = await fetchRawCampaignLeads(apiKey, m.sourceId);
-      const eligibleRaw = raw.filter((l) => isEligible(l, automation.minDays));
+      let eligibleRaw = raw.filter((l) => isEligible(l, automation.minDays, totalSteps));
+
+      // Blocklist guard (network read): never move a suppressed contact to Rosa.
+      if (eligibleRaw.length) {
+        const checks = await Promise.all(
+          eligibleRaw.map((l) => isBlocklisted(apiKey, String(l.email ?? "")).catch(() => false))
+        );
+        eligibleRaw = eligibleRaw.filter((_, i) => !checks[i]);
+      }
+
       const eligible: EligibleLead[] = eligibleRaw.map((l) => ({
         email: String(l.email ?? ""),
         firstName: String(l.first_name ?? ""),
         company: String(l.company_name ?? ""),
         daysSinceLastStep: Math.floor((Date.now() - lastStepTime(l)) / 86400000),
       }));
-      const result: MappingResult = {
-        sourceName: m.sourceName,
-        targetName: m.targetName,
-        eligible,
-      };
-      if (!dryRun && eligible.length) {
+      const result: MappingResult = { sourceName: m.sourceName, targetName: m.targetName, totalSteps, eligible };
+
+      if (willWrite && eligible.length) {
         const payload = eligibleRaw.map((l) => ({
           email: l.email,
           first_name: l.first_name,
@@ -137,6 +180,16 @@ export async function runAutomation(
         const res = await addLeadsToCampaign(apiKey, m.targetId, payload);
         result.added = res.added;
         if (res.errors > 0) result.error = `${res.errors} lead non aggiunti (errore API)`;
+        await logAudit({
+          clientSlug,
+          actor: "cron",
+          azione: "move_sassi_rosa",
+          target: m.targetName,
+          campaignId: m.targetId,
+          count: res.added,
+          motivo: `${automation.id}: sequenza completata (${totalSteps || "?"} step) + ${automation.minDays}gg, no reply, non in blocklist`,
+          meta: { source: m.sourceName, emails: eligible.map((e) => e.email) },
+        });
       }
       results.push(result);
     } catch (err) {
@@ -149,7 +202,8 @@ export async function runAutomation(
     }
   }
   return {
-    dryRun,
+    dryRun: !willWrite,
+    enabled: automation.enabled,
     results,
     totalEligible: results.reduce((s, r) => s + r.eligible.length, 0),
   };

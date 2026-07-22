@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     // 1. Lead-move automations (Sassi → Carretta, etc.)
     for (const a of getAutomations(c.slug)) {
       try {
-        const report = await runAutomation(client.instantlyApiKey, a, false); // LIVE
+        const report = await runAutomation(client.instantlyApiKey, a, false, c.slug); // LIVE (no-op if !enabled)
         out[a.id] = {
           added: report.results.reduce((s, r) => s + (r.added ?? 0), 0),
           eligible: report.totalEligible,
