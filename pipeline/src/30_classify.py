@@ -49,6 +49,10 @@ def det_flags(lead_id: str, cache: dict, seed: dict) -> list[dict]:
 
 def llm_flags(lead_id: str, parsed: dict) -> list[dict]:
     rows: list[dict] = []
+    ia = parsed.get("is_agency") or {}
+    if ia.get("value"):
+        rows.append({"lead_id": lead_id, "tipo": "is_agency", "valore": str(ia.get("value")),
+                     "evidenza": ia.get("evidence"), "provider": "llm"})
     for tipo in ("open_house", "struttura", "nome_usabile"):
         f = parsed.get(tipo) or {}
         rows.append({"lead_id": lead_id, "tipo": tipo, "valore": f.get("value"),

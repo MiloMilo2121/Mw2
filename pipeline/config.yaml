@@ -37,11 +37,18 @@ providers:
     model: "deepseek/deepseek-chat"        # o: qwen/qwen-2.5-72b-instruct · moonshotai/kimi-k2 · z-ai/glm-4.6
     api_key_env: "OPENROUTER_API"
     cost_per_domain_eur: 0.0015            # ~1/15 di Claude Sonnet (da calibrare sul test)
-  scrape_direct:
+  scrape_direct:               # PROVIDER PRIMARIO (free): home + /immobili + /chi-siamo via HTTP
     enabled: true
     pages: ["/", "annunci", "immobili", "vendite", "blog", "news"]   # match fuzzy sui link interni
-    timeout_s: 14
+    timeout_s: 12
     parallel: 24
+    cap_chars: 20000
+    min_chars: 500            # sotto questa soglia → fallback Firecrawl (JS)
+    apify_min_chars: 300      # ancora sotto → ultimo fallback Apify
+  firecrawl:                   # fallback JS-render (solo sui domini che il free non legge)
+    enabled: true
+    cost_per_domain_eur: 0.001
+    wait_ms: 2500
   perplexity_relay:
     enabled: false          # SLOT — attivare dopo aver incollato la spec in prompts/perplexity_relay.md
     budget_eur_max: 40      # tetto mensile concordato in call

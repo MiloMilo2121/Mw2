@@ -40,6 +40,13 @@ def is_solo_affitti(flags: dict) -> bool:
     return str(flags.get("solo_affitti", "")).strip().lower() in ("true", "si", "1")
 
 
+def is_not_agency(flags: dict) -> bool:
+    """True ONLY when the classifier is sure the site is NOT a real-estate sales
+    agency (wrong website in the source list). "unknown"/missing → keep (stays in
+    the funnel), so we exclude on certainty, never on absence of evidence."""
+    return str(flags.get("is_agency", "")).strip().lower() == "no"
+
+
 def _price(flags: dict) -> float | None:
     v = flags.get("fascia_prezzo")
     try:
