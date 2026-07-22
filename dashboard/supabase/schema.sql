@@ -144,3 +144,23 @@ alter table public.leads         enable row level security;
 alter table public.flags         enable row level security;
 alter table public.cestini       enable row level security;
 alter table public.qa_results    enable row level security;
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Audit log (P1.2). EVERY Instantly write (cron automation, UI upload, agent)
+-- appends a row here. Written server-side with the service role; internal only.
+-- ─────────────────────────────────────────────────────────────────────────────
+create table if not exists public.audit_log (
+  id           uuid primary key default gen_random_uuid(),
+  client_slug  text not null,
+  actor        text not null,                -- cron | ui | agent
+  azione       text not null,                -- e.g. add_leads_to_campaign | blocklist | move_sassi_rosa
+  target       text,                         -- campagna/lista/blocklist target (nome o id)
+  campaign_id  text,
+  count        integer not null default 0,   -- quante entità toccate
+  motivo       text,                         -- perché (regola/cestino/verdetto review)
+  meta         jsonb,                        -- dettaglio strutturato (lead, verdetti, errori)
+  created_at   timestamptz not null default now()
+);
+create index if not exists audit_log_client_idx on public.audit_log (client_slug, created_at desc);
+
+alter table public.audit_log enable row level security;
