@@ -21,7 +21,7 @@ export async function GET(
   const list = getAutomations(client.slug);
   const automations = [];
   for (const a of list) {
-    const report = await runAutomation(client.instantlyApiKey, a, true); // dry-run
+    const report = await runAutomation(client.instantlyApiKey, a, true, client.slug); // dry-run
     automations.push({ id: a.id, name: a.name, description: a.description, minDays: a.minDays, ...report });
   }
 
@@ -63,6 +63,6 @@ export async function POST(
   const id = String(body.id ?? "");
   const automation = getAutomation(client.slug, id);
   if (!automation) return NextResponse.json({ error: "Unknown automation" }, { status: 400 });
-  const report = await runAutomation(client.instantlyApiKey, automation, false); // LIVE
+  const report = await runAutomation(client.instantlyApiKey, automation, false, client.slug); // LIVE (no-op if !enabled)
   return NextResponse.json({ ranAt: new Date().toISOString(), ...report });
 }
