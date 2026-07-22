@@ -12,6 +12,17 @@ import requests
 from .config import DATA_OUT, env
 
 
+def align_rows(rows: list[dict]) -> list[dict]:
+    """Give every row the SAME set of keys (union), filling gaps with None.
+
+    PostgREST bulk insert rejects a batch whose objects have different keys
+    ("All object keys must match" → HTTP 400). Flag rows legitimately differ
+    (a `zona` flag has no confidence/source_url; an LLM flag does), so we
+    normalise to the union before POSTing. Pure — unit-tested."""
+    keys = {k for r in rows for k in r}
+    return [{k: r.get(k) for k in keys} for r in rows]
+
+
 class SupabaseWriter:
     def __init__(self, dry_run: bool = False, timeout: int = 30) -> None:
         self.dry_run = dry_run
@@ -48,7 +59,7 @@ class SupabaseWriter:
         res = requests.post(
             f"{self.url}/rest/v1/{table}",
             headers=self._headers(),
-            data=json.dumps(rows),
+            data=json.dumps(align_rows(rows)),
             timeout=self.timeout,
         )
         res.raise_for_status()
