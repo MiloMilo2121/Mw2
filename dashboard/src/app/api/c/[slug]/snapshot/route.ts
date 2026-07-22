@@ -18,7 +18,18 @@ export async function GET(
   const days = Math.min(90, Math.max(7, Number(url.searchParams.get("days")) || 30));
 
   const snapshot = await buildSnapshot(client, days);
-  return NextResponse.json(snapshot, {
+  // statusMessage carries raw provider SMTP text (e.g. "550 …") for internal
+  // alerting only — never expose it in the client-facing (slug-as-secret)
+  // payload (§3.6). buildSnapshot keeps it server-side for the alert cron.
+  const clientSafe = {
+    ...snapshot,
+    accounts: snapshot.accounts.map((a) => {
+      const copy = { ...a };
+      delete copy.statusMessage;
+      return copy;
+    }),
+  };
+  return NextResponse.json(clientSafe, {
     headers: { "Cache-Control": "no-store" },
   });
 }

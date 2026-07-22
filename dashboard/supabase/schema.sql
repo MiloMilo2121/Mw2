@@ -42,6 +42,26 @@ create table if not exists public.metric_snapshots (
   primary key (client_slug, day)
 );
 
+-- Alerts history (P0). Append-only audit of notifications the 07:00 cron sends
+-- to a human operator (account 550s / negative status / open-rate collapse /
+-- quota / automation failures). Also the dedup source: the cron suppresses an
+-- identical (client_slug, title) alert seen within ~26h so a persistent
+-- condition notifies once (on transition) instead of every morning.
+create table if not exists public.alerts (
+  id           uuid primary key default gen_random_uuid(),
+  -- No FK to clients(slug): the audit trail must persist even for builtin/env
+  -- clients (e.g. geriko) that have no row in the clients table — otherwise the
+  -- insert would fail the FK and the alert history would be silently empty.
+  client_slug  text not null,
+  level        text not null default 'warn' check (level in ('info','warn','crit')),
+  title        text not null,
+  body         text not null,
+  channel      text,                       -- telegram | email | webhook | console | null
+  delivered    boolean not null default false,
+  created_at   timestamptz not null default now()
+);
+create index if not exists alerts_client_idx on public.alerts (client_slug, created_at desc);
+
 -- NOTE on security: this app talks to Supabase exclusively with the SERVICE ROLE
 -- key from server-side route handlers. The anon key is never used and these
 -- tables are not exposed to the browser, so Row Level Security can stay enabled
@@ -49,6 +69,7 @@ create table if not exists public.metric_snapshots (
 alter table public.clients          enable row level security;
 alter table public.feedback         enable row level security;
 alter table public.metric_snapshots enable row level security;
+alter table public.alerts           enable row level security;
 
 -- Seed an example client (mock data, no API key):
 -- insert into public.clients (slug, name, accent_color)
