@@ -5,11 +5,11 @@ import {
   getScopedCampaignIds,
   getScopedLiteCampaigns,
   fetchAccounts,
-  fetchDailyForCampaigns,
+  fetchCampaignAnalytics,
   fetchDailyAccountAnalytics,
   matchesKeywords,
 } from "@/lib/instantly";
-import { notify, isNotifyConfigured } from "@/lib/notify";
+import { notify, activeChannel } from "@/lib/notify";
 import {
   detectAccountAlerts,
   detectCampaignAlerts,
@@ -17,6 +17,7 @@ import {
   detectQuotaAlerts,
   type Alert,
 } from "@/lib/alerts";
+import { recentlyNotified, recordAlert } from "@/lib/alerts_store";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -32,6 +33,18 @@ export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
   if (!secret || auth !== `Bearer ${secret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Channel self-test (P0 DoD): `?test=alert` fires one synthetic alert through
+  // the configured channel — proves "un 550 simulato produce una notifica"
+  // without waiting for real data. Not persisted (synthetic).
+  if (new URL(req.url).searchParams.get("test") === "alert") {
+    const result = await notify(
+      "crit",
+      "[test] Account in errore (550 simulato)",
+      "Alert di prova (?test=alert). demo@example.com status -3 — SMTP 550 5.4.5 Daily user sending limit exceeded."
+    );
+    return NextResponse.json({ test: true, channel: activeChannel(), result });
   }
 
   const summary: Record<string, unknown> = {};
@@ -89,14 +102,18 @@ export async function GET(req: Request) {
       alerts.push(...detectAccountAlerts(scopedAccounts, client.name));
       alerts.push(...detectCampaignAlerts(liteCampaigns ?? [], client.name));
 
-      // (b) yesterday's open rate over this client's campaigns.
-      const ids = (liteCampaigns ?? []).map((lc) => lc.id);
-      if (ids.length) {
+      // (b) yesterday's UNIQUE open rate over this client's campaigns. Per-day
+      // unique opens aren't in the daily series, so read per-campaign analytics
+      // for the single day and sum opensUnique/emailsSent over scoped campaigns.
+      const ids = new Set((liteCampaigns ?? []).map((lc) => lc.id));
+      if (ids.size) {
         const y = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-        const daily = await fetchDailyForCampaigns(client.instantlyApiKey, ids, y, y);
-        const point = daily.find((d) => d.date === y) ?? daily[daily.length - 1];
-        if (point) {
-          const openAlert = detectOpenRateAlert(point, y, client.name);
+        const yCampaigns = await fetchCampaignAnalytics(client.instantlyApiKey, y, y);
+        const mine = yCampaigns.filter((cc) => ids.has(cc.id));
+        const sent = mine.reduce((s, cc) => s + cc.emailsSent, 0);
+        const opensUnique = mine.reduce((s, cc) => s + cc.opensUnique, 0);
+        if (sent > 0) {
+          const openAlert = detectOpenRateAlert({ sent, opensUnique }, y, client.name);
           if (openAlert) alerts.push(openAlert);
         }
       }
@@ -126,13 +143,35 @@ export async function GET(req: Request) {
         console.error(`[alerts] quota guard skipped: ${(err as Error).message}`);
       }
 
-      for (const a of alerts) await notify(a.level, a.title, a.body);
+      // Notify each alert, suppressing daily repeats of a persistent condition
+      // (transition-only), and record every sent alert to the audit history.
+      let notified = 0;
+      for (const a of alerts) {
+        if (await recentlyNotified(c.slug, a.title)) continue;
+        const res = await notify(a.level, a.title, a.body);
+        await recordAlert(c.slug, a, res);
+        notified++;
+      }
       out["alerts"] = {
         detected: alerts.length,
-        channel: isNotifyConfigured() ? "telegram" : "unconfigured (no-op)",
+        notified,
+        channel: activeChannel() ?? "unconfigured (no-op)",
       };
     } catch (err) {
+      // The alert path itself failed (e.g. Instantly unreachable). That silence
+      // is the failure mode P0 exists to surface — so notify instead of only
+      // recording it in a summary nobody reads.
       out["alerts"] = { error: (err as Error).message };
+      try {
+        await notify(
+          "crit",
+          `[${client.name}] Alerting non eseguito`,
+          `Il controllo alert del cron 07:00 è fallito: ${(err as Error).message}. ` +
+            `Impossibile valutare account/campagne/aperture in questo run.`
+        );
+      } catch {
+        /* notify must never break the cron */
+      }
     }
 
     if (Object.keys(out).length) summary[c.slug] = out;

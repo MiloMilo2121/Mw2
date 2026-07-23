@@ -56,27 +56,28 @@ export function detectCampaignAlerts(campaigns: CampaignLite[], clientName: stri
 }
 
 /**
- * (b) Yesterday's open rate collapsed. Fires only with a meaningful volume
- * (sent ≥ OPEN_RATE_MIN_SENT) so a tiny day can't trip it.
+ * (b) Yesterday's UNIQUE open rate collapsed. Fires only with a meaningful
+ * volume (sent ≥ OPEN_RATE_MIN_SENT) so a tiny day can't trip it.
  *
- * NOTE: the daily analytics endpoint exposes total opens per day, not unique.
- * We treat `opens` as the numerator; being an upper bound, this is conservative
- * (it never over-alerts). Swap to unique opens if/when a per-day unique series
- * is available.
+ * Uses UNIQUE opens (open_unici, per the spec §P0.2 b), not total opens: total
+ * opens ≥ unique, so a total-opens ratio is inflated and can stay above the
+ * floor even when the unique-open rate has cratered — i.e. it would UNDER-alert
+ * on the exact collapse this check exists to catch. The cron sums per-campaign
+ * `opensUnique` for yesterday over the client's scoped campaigns.
  */
 export function detectOpenRateAlert(
-  point: { sent: number; opens: number },
+  point: { sent: number; opensUnique: number },
   dateLabel: string,
   clientName: string
 ): Alert | null {
   if (point.sent < OPEN_RATE_MIN_SENT) return null;
-  const rate = point.opens / point.sent;
+  const rate = point.opensUnique / point.sent;
   if (rate >= OPEN_RATE_FLOOR) return null;
   return {
     level: "warn",
     title: `[${clientName}] Open rate crollato (${dateLabel})`,
     body:
-      `Aperture ${point.opens} / inviate ${point.sent} = ${(rate * 100).toFixed(1)}% ` +
+      `Aperture uniche ${point.opensUnique} / inviate ${point.sent} = ${(rate * 100).toFixed(1)}% ` +
       `(soglia ${OPEN_RATE_FLOOR * 100}%). Possibile problema deliverability o tracking.`,
   };
 }
